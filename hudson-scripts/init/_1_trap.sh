@@ -13,11 +13,8 @@
 __onExit() {
 	local RETURN=$?
 
-	LSDEBUG "Program will exit, printing the environment variables for later debugging"
-	for e in $(env|sort);
-	do
-		echo "  $e"
-	done
+	LSDEBUG "Program will exit, saving the environment variables to a file for later debugging"
+	echo $(env|sort) > env.txt
 
 	if [ $RETURN -ne 0 -a $RETURN -lt 129 -o $RETURN -gt 165 ]; then
 		LSCRITICAL "An error occurred"

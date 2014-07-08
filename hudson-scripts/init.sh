@@ -10,18 +10,20 @@
 #    Obeo - initial API and implementation
 # ====================================================================
 
- set -o nounset
- set -o errexit
+set -o nounset
+set -o errexit
+
+DIRNAME=$(dirname "$0")
 
 # load bootstrap scripts (starting with _) in order
-for S in $(ls -1 init/_* | sort -t '.' -k1n);
+for S in $(ls -1 "$DIRNAME/init/_"* | sort -t '.' -k1n);
 do
 	echo "Loading bootstrap '$S'"
 	source $S
 done
 
 # load scripts (not starting with _) in order
-for S in $( (ls -1 init/*;ls -1 init/_*) | sort -t '.' -k1n | uniq -u );
+for S in $( (ls -1 "$DIRNAME/init/"*;ls -1 "$DIRNAME/init/_"*) | sort -t '.' -k1n | uniq -u );
 do
 	LSINFO "Loading '$S'"
 	source $S

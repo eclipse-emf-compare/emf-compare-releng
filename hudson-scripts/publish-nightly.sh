@@ -25,7 +25,7 @@ provided by the Hudson build.
     exit 1
 }
 
-source init.sh
+source "$(dirname "$0")/init.sh"
 
 LSINFO "Publishing nightly build ($UPDATE_SITE__QUALIFIED_VERSION) of $PROJECT_NAME"
 

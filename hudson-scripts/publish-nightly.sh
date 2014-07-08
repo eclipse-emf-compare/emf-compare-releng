@@ -10,13 +10,12 @@
 #    Obeo - initial API and implementation
 # ====================================================================
 
-[ -z "$PROJECT_NAME" -o -z "$GIT_BRANCH" -o -z "$UPDATE_SITE__ARTIFACT_URL" -o -z "$UPDATE_SITE__ARTIFACT_NAME" -o -z "$UPDATE_SITE__UNQUALIFIED_VERSION" -o -z "$UPDATE_SITE__QUALIFIED_VERSION" ] && {
+[ -z "$GIT_BRANCH" -o -z "$UPDATE_SITE__ARTIFACT_URL" -o -z "$UPDATE_SITE__ARTIFACT_NAME" -o -z "$UPDATE_SITE__UNQUALIFIED_VERSION" -o -z "$UPDATE_SITE__QUALIFIED_VERSION" ] && {
      echo "Execution aborted.
 
 One or more of the required variables is not set. They are normally
 provided by the Hudson build.
 
-- PROJECT_NAME: the name of the Eclipse project.
 - GIT_BRANCH: the git branch that has been build. 
 - UPDATE_SITE__ARTIFACT_URL: the URL where the zipped update site to publish can be donwload.
 - UPDATE_SITE__ARTIFACT_NAME: the filename of the zipped update site.

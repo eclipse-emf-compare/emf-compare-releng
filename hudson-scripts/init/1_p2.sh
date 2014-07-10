@@ -48,10 +48,10 @@ if [ ! -f "${P2_ADMIN_ARCHIVE}" ]; then
 	wget -q --no-check-certificate ${P2_ADMIN_URL} -O - > "${P2_ADMIN_ARCHIVE}"
 fi
 
-LSINFO "Unziping '${P2_ADMIN_ARCHIVE}'"
+LSDEBUG "Unziping '${P2_ADMIN_ARCHIVE}'"
 tar zxf "${P2_ADMIN_ARCHIVE}"
 
-LSINFO "Defining p2 aliases"
+LSDEBUG "Defining p2 aliases"
 shopt -s expand_aliases
 
 LSDEBUG "composite-repository='p2-admin/p2-admin -vm ${JAVA_HOME}/bin/java -application org.eclipselabs.equinox.p2.composite.repository'"

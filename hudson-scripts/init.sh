@@ -10,21 +10,29 @@
 #    Obeo - initial API and implementation
 # ====================================================================
 
-set -o nounset
+set -o nounset 
 set -o errexit
+set -o errtrace
+set -o functrace
+
+shopt -s nullglob 
+shopt -s extglob
 
 DIRNAME=$(dirname "${0}")
 
 # load bootstrap scripts (starting with _) in order
 for S in $(ls -1 "${DIRNAME}/init/_"* | sort -t '.' -k1n);
 do
-	echo "Loading bootstrap '${S}'"
+	if [ ! -z ${DEBUG_BOOTSTRAP:-} ]; then
+		echo "[DEBUG]    Loading bootstrap '${S}'"
+	fi
 	source ${S}
 done
 
 # load scripts (not starting with _) in order
 for S in $( (ls -1 "${DIRNAME}/init/"*;ls -1 "${DIRNAME}/init/_"*) | sort -t '.' -k1n | uniq -u );
 do
-	LSINFO "Loading '${S}'"
+	LSDEBUG "Loading '${S}'"
 	source ${S}
+	LSDEBUG "'${S}' has been loaded"
 done

@@ -10,6 +10,8 @@
 #    Obeo - initial API and implementation
 # ====================================================================
 
+_ON_LOAD_PWD=$(pwd)
+
 __onExit() {
 	local RETURN=$?
 
@@ -17,6 +19,7 @@ __onExit() {
 	env | sort > env.txt
 
 	if [ $RETURN -ne 0 -a $RETURN -lt 129 -o $RETURN -gt 165 ]; then
+		cd "${_ON_LOAD_PWD}"
 		LSCRITICAL "An error occurred"
 		LSLOGSTACK
 	fi

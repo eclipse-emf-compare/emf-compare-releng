@@ -32,8 +32,6 @@ LSDEBUG "Stream name is '${STREAM}'"
 
 LSINFO "Clean up nightly builds (will keep the ${NB_BUILDS_TO_KEEP} most recent builds of stream ${STREAM}')"
 
-shopt -s nullglob
-
 cd ${UPDATE_NIGHTLY_HOME}
 ALL_FOLDERS_WITH_UNQUALIFIED_VERSION_PREFIX=( ${UPDATE_SITE__UNQUALIFIED_VERSION}* )
 cd ${CURRENT_PWD}
@@ -125,8 +123,6 @@ else
             rm -rf "${UPDATE_NIGHTLY_HOME}/"*
         fi
     else
-        LSDEBUG "After clean up, latest update site confounded is '${LATEST_UPDATE_SITE__ALL_NIGHTLIES[@]}'"
+        LSDEBUG "After clean up, latest update site is '${LATEST_UPDATE_SITE__ALL_NIGHTLIES[@]}'"
     fi
 fi
-
-shopt -u nullglob

@@ -46,12 +46,6 @@ wget -q --no-check-certificate ${UPDATE_SITE__ARTIFACT_URL} -O - > ${UPDATE_SITE
 STREAM="$(echo ${UPDATE_SITE__UNQUALIFIED_VERSION} | sed-regex 's/^([0-9]+\.[0-9]+)\.[0-9]+$/\1/').x"
 LSDEBUG "Stream name is '${STREAM}'"
 
-if [ -d "${UPDATE_SITE__QUALIFIED_VERSION}" ];then
-	LSINFO "Removing folder '${UPDATE_SITE__QUALIFIED_VERSION}'"
-	rm -rf ${UPDATE_SITE__QUALIFIED_VERSION}
-else
-	LSDEBUG "Folder '${UPDATE_SITE__QUALIFIED_VERSION}' does not already exist, do nothing"
-fi
 LSINFO "Unziping '${UPDATE_SITE__ARTIFACT_NAME}'"
 unzip -qq ${UPDATE_SITE__ARTIFACT_NAME} -d ${UPDATE_SITE__QUALIFIED_VERSION}
 

@@ -40,7 +40,8 @@ done
 LSINFO "Downloading '$UPDATE_SITE__ARTIFACT_URL'"
 wget -q --no-check-certificate $UPDATE_SITE__ARTIFACT_URL -O - > $UPDATE_SITE__ARTIFACT_NAME
 
-STREAM=$(echo $UPDATE_SITE__UNQUALIFIED_VERSION | sed-regex 's/^([0-9]+\.[0-9]+)\.[0-9]+$/\1/')
+STREAM="$(echo $UPDATE_SITE__UNQUALIFIED_VERSION | sed-regex 's/^([0-9]+\.[0-9]+)\.[0-9]+$/\1/').x"
+LSDEBUG "Stream name is '$STREAM'"
 
 if [ -d $UPDATE_SITE__QUALIFIED_VERSION ];then
 	LSDEBUG "Removing folder '$UPDATE_SITE__QUALIFIED_VERSION'"
@@ -58,16 +59,16 @@ cp -rf $UPDATE_SITE__QUALIFIED_VERSION $UPDATE_NIGHTLY_HOME
 
 ## stream update
 
-LSINFO "Adding '$UPDATE_NIGHTLY_URL/$UPDATE_SITE__QUALIFIED_VERSION' to '$UPDATE_NIGHTLY_HOME/$STREAM.x'"
+LSINFO "Adding '$UPDATE_NIGHTLY_URL/$UPDATE_SITE__QUALIFIED_VERSION' to '$UPDATE_NIGHTLY_HOME/$STREAM'"
 composite-repository \
-	-location "$UPDATE_NIGHTLY_HOME/$STREAM.x" \
+	-location "$UPDATE_NIGHTLY_HOME/$STREAM" \
 	-add "$UPDATE_NIGHTLY_URL/$UPDATE_SITE__QUALIFIED_VERSION" \
-	-repositoryName "$PROJECT_NAME $STREAM.x nightly builds" \
+	-repositoryName "$PROJECT_NAME $STREAM nightly builds" \
 	-compressed
-createP2Index "$UPDATE_NIGHTLY_HOME/$STREAM.x"
+createP2Index "$UPDATE_NIGHTLY_HOME/$STREAM"
 
-LSINFO "Creating redirection from '$UPDATE_NIGHTLY_HOME/$STREAM.x/latest' to '$UPDATE_NIGHTLY_URL/$UPDATE_SITE__QUALIFIED_VERSION'"
-createRedirect "$UPDATE_NIGHTLY_HOME/$STREAM.x/latest" "$UPDATE_NIGHTLY_URL/$UPDATE_SITE__QUALIFIED_VERSION" "$PROJECT_NAME $STREAM.x latest nightly build"
+LSINFO "Creating redirection from '$UPDATE_NIGHTLY_HOME/$STREAM/latest' to '$UPDATE_NIGHTLY_URL/$UPDATE_SITE__QUALIFIED_VERSION'"
+createRedirect "$UPDATE_NIGHTLY_HOME/$STREAM/latest" "$UPDATE_NIGHTLY_URL/$UPDATE_SITE__QUALIFIED_VERSION" "$PROJECT_NAME $STREAM latest nightly build"
 
 ## all updates
 

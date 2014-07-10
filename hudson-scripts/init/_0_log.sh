@@ -26,7 +26,7 @@ LS_VERSION=0.3
 
 LS_OUTPUT=${LS_OUTPUT:-/dev/stdout}
 # XXX need more flexible templating, currently manual padding for level names
-#LS_DEFAULT_FMT=${LS_DEFAULT_FMT:-'[$_LS_LEVEL_STR][${FUNCNAME[1]}:${BASH_LINENO[0]}]'}
+#LS_DEFAULT_FMT=${LS_DEFAULT_FMT:-'[${_LS_LEVEL_STR}][${FUNCNAME[1]}:${BASH_LINENO[0]}]'}
 LS_DEFAULT_FMT=${LS_DEFAULT_FMT:-'%-10s %s [%s:%s]\n'}
 
 LS_DEBUG_LEVEL=10
@@ -34,23 +34,23 @@ LS_INFO_LEVEL=20
 LS_WARNING_LEVEL=30
 LS_ERROR_LEVEL=40
 LS_CRITICAL_LEVEL=50
-LS_LEVEL=${LS_LEVEL:-$LS_DEBUG_LEVEL}
+LS_LEVEL=${LS_LEVEL:-${LS_DEBUG_LEVEL}}
 # LS_LEVELS structure:
 # Level, Level Name, Level Format, Before Log Entry, After Log Entry
 LS_LEVELS=(
-  $LS_DEBUG_LEVEL    '[DEBUG]'    '\e[0;32m'    '\e[0m'
-  $LS_INFO_LEVEL     '[INFO]'     '\e[0;34m'    '\e[0m'
-  $LS_WARNING_LEVEL  '[WARNING]'  '\e[0;33m'    '\e[0m'
-  $LS_ERROR_LEVEL    '[ERROR]'    '\e[0;31m'    '\e[0m'
-  $LS_CRITICAL_LEVEL '[CRITICAL]' '\e[0;37;41m' '\e[0m'
+  ${LS_DEBUG_LEVEL}    '[DEBUG]'    '\e[0;32m'    '\e[0m'
+  ${LS_INFO_LEVEL}     '[INFO]'     '\e[0;34m'    '\e[0m'
+  ${LS_WARNING_LEVEL}  '[WARNING]'  '\e[0;33m'    '\e[0m'
+  ${LS_ERROR_LEVEL}    '[ERROR]'    '\e[0;31m'    '\e[0m'
+  ${LS_CRITICAL_LEVEL} '[CRITICAL]' '\e[0;37;41m' '\e[0m'
 )
 
 _LS_FIND_LEVEL_STR () {
-  local LEVEL=$1
+  local LEVEL=${1}
   local i
-  _LS_LEVEL_STR="$LEVEL"
+  _LS_LEVEL_STR="${LEVEL}"
   for ((i=0; i<${#LS_LEVELS[@]}; i+=4)); do
-    if [[ "$LEVEL" == "${LS_LEVELS[i]}" ]]; then
+    if [[ "${LEVEL}" == "${LS_LEVELS[i]}" ]]; then
       _LS_LEVEL_STR="${LS_LEVELS[i+1]}"
       #_LS_LEVEL_BEGIN="${LS_LEVELS[i+2]}"
       #_LS_LEVEL_END="${LS_LEVELS[i+3]}"
@@ -63,16 +63,16 @@ _LS_FIND_LEVEL_STR () {
 }
 
 # General logging function
-# $1: Level
+# ${1}: Level
 LSLOG () {
-  local LEVEL=$1
+  local LEVEL=${1}
   shift
   (( LEVEL < LS_LEVEL )) && return 1
-  _LS_FIND_LEVEL_STR $LEVEL
+  _LS_FIND_LEVEL_STR ${LEVEL}
   # if no message was passed, read it from STDIN
   local _MSG
   [[ $# -ne 0 ]] && _MSG="$@" || _MSG="$(cat)"
-  printf "$LS_DEFAULT_FMT" "$_LS_LEVEL_STR" "$_MSG" "$(basename ${BASH_SOURCE[1]})" "${BASH_LINENO[0]}" >> "$LS_OUTPUT"
+  printf "${LS_DEFAULT_FMT}" "${_LS_LEVEL_STR}" "${_MSG}" "$(basename ${BASH_SOURCE[1]})" "${BASH_LINENO[0]}" >> "${LS_OUTPUT}"
 }
 
 shopt -s expand_aliases

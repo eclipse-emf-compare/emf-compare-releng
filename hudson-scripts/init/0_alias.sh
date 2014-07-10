@@ -18,36 +18,36 @@ findGnuRegex () {
     args=
     for arg in $*
     do
-        case $arg in
+        case ${arg} in
             -ireges|-regex)
-                args="$args -regextype posix-extended $arg"
+                args="${args} -regextype posix-extended ${arg}"
                 ;;
             *)
-                args="$args $arg"
+                args="${args} ${arg}"
                 ;;
         esac
     done
     set -f
-    command find $args
+    command find ${args}
     set +f
 }
 
 # define alias depending on the underlying OS 
 # e.g., regex on BSD-like and GNU-like OS are not handled through the same options for
 # find and sed.
-if [[ "$OSTYPE" == "linux"* || "$OSTYPE" == "cygwin"* ]]; then
+if [[ "${OSTYPE}" == "linux"* || "${OSTYPE}" == "cygwin"* ]]; then
 	alias sed-regex="sed -r"
 	alias find-regex="findGnuRegex"
 
 	LSDEBUG 'sed-regex="sed -r"'
 	LSDEBUG 'find-regex="findGnuRegex"'
-elif [[ "$OSTYPE" == "darwin"* || "$OSTYPE" == "freebsd"* ]]; then
+elif [[ "${OSTYPE}" == "darwin"* || "${OSTYPE}" == "freebsd"* ]]; then
 	alias sed-regex="sed -E"
 	alias find-regex="find -E"
 
 	LSDEBUG 'sed-regex="sed -E"'
 	LSDEBUG 'find-regex="find -E"'
 else
-	LSCRITICAL "Unknown 'OSTYPE'=$OSTYPE."
+	LSCRITICAL "Unknown 'OSTYPE'=${OSTYPE}."
 	exit -1
 fi

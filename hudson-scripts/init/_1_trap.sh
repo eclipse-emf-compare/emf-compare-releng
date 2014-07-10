@@ -18,19 +18,19 @@ __onExit() {
 	LSDEBUG "Program will exit, saving the environment variables to a file for later debugging"
 	env | sort > env.txt
 
-	if [ $RETURN -ne 0 -a $RETURN -lt 129 -o $RETURN -gt 165 ]; then
+	if [ ${RETURN} -ne 0 -a ${RETURN} -lt 129 -o ${RETURN} -gt 165 ]; then
 		cd "${_ON_LOAD_PWD}"
 		LSCRITICAL "An error occurred"
 		LSLOGSTACK
 	fi
 
-	exit $RETURN
+	exit ${RETURN}
 }
 
 __onInterruption() {
 	local RETURN=$?
 	LSDEBUG "Program has been interrupted"
-	exit $RETURN
+	exit ${RETURN}
 }
 
 trap __onInterruption INT TERM

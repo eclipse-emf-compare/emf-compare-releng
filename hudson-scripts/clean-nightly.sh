@@ -10,119 +10,65 @@
 #    Obeo - initial API and implementation
 # ====================================================================
 
-[  -z "${UPDATE_SITE__UNQUALIFIED_VERSION}" ] && {
-    echo "Execution aborted.
+if [ $# -lt 1 ]; then
+     echo "Execution aborted. One or more of the required parameters is not set. 
 
-One or more of the required variables is not set. They are normally
-provided by the Hudson build.
+Usage: $0 unqualifiedVersion [nbBuildToKeep]
 
- - UPDATE_SITE__UNQUALIFIED_VERSION: the unqualified version of the update site to publish.
+- unqualifiedVersion: the unqualified version of the update sites to clean.
+- nbBuildToKeep: the number of build to keep. 0 to remove all streams related to the unqualifiedVersion
 "
-    exit 1
-}
+exit 1
+fi
+
+unqualifiedVersion="${1}"
+nbBuildToKeep="${2:-5}"
 
 source "$(dirname "${0}")/init.sh"
 
-NB_BUILDS_TO_KEEP=${NB_BUILDS_TO_KEEP:-"5"}
+currentPwd=$(pwd)
 
-CURRENT_PWD=$(pwd)
+LSDEBUG "unqualifiedVersion is '${unqualifiedVersion}'"
+minorVersion="$(echo ${unqualifiedVersion} | sed-regex 's/^([0-9]+\.[0-9]+)\.[0-9]+$/\1/')"
+LSDEBUG "Minor stream name is '${minorVersion}.x'"
+majorVersion="$(echo ${unqualifiedVersion} | sed-regex 's/^([0-9]+)\.[0-9]+\.[0-9]+$/\1/')"
+LSDEBUG "Major stream name is '${majorVersion}.x'"
 
-STREAM="$(echo ${UPDATE_SITE__UNQUALIFIED_VERSION} | sed-regex 's/^([0-9]+\.[0-9]+)\.[0-9]+$/\1/').x"
-LSDEBUG "Stream name is '${STREAM}'"
+LSINFO "== Clean up '${unqualifiedVersion}' nightly builds (will keep the ${nbBuildToKeep} most recent) =="
 
-LSINFO "Clean up nightly builds (will keep the ${NB_BUILDS_TO_KEEP} most recent builds of stream ${STREAM}')"
+cd "${UPDATE_NIGHTLY_HOME}"
+foldersWithUnqualifiedVersionPrefix=( "${unqualifiedVersion}"* )
+cd "${currentPwd}"
 
-cd ${UPDATE_NIGHTLY_HOME}
-ALL_FOLDERS_WITH_UNQUALIFIED_VERSION_PREFIX=( ${UPDATE_SITE__UNQUALIFIED_VERSION}* )
-cd ${CURRENT_PWD}
-
-if [ ${#ALL_FOLDERS_WITH_UNQUALIFIED_VERSION_PREFIX[@]} -eq 0 ]; then
-    LSINFO "No build found for stream '${STREAM}' in '${UPDATE_NIGHTLY_HOME}'"
+if [ ${#foldersWithUnqualifiedVersionPrefix[@]} -eq 0 ]; then
+    LSINFO "No build '${unqualifiedVersion}' found in '${UPDATE_NIGHTLY_HOME}, nothing to clean'"
     exit 0
 fi
 
-if [ ${NB_BUILDS_TO_KEEP} -gt 0 ]; then
-    UPDATE_SITE_TO_KEEP=( $(echo ${ALL_FOLDERS_WITH_UNQUALIFIED_VERSION_PREFIX[@]} | tr ' ' '\n' | sort -r | head -n ${NB_BUILDS_TO_KEEP}) )
-    UNION=( ${UPDATE_SITE_TO_KEEP[@]} ${ALL_FOLDERS_WITH_UNQUALIFIED_VERSION_PREFIX[@]} )
-    UPDATE_SITES__TO_CLEAN=( $(echo ${UNION[@]} | tr ' ' '\n' | sort | uniq -u) )
+if [ ${nbBuildToKeep} -gt 0 ]; then
+    updateSiteToKeep=( $(echo ${foldersWithUnqualifiedVersionPrefix[@]} | tr ' ' '\n' | sort -r | head -n ${nbBuildToKeep}) )
+    UNION=( ${updateSiteToKeep[@]} ${foldersWithUnqualifiedVersionPrefix[@]} )
+    updateSitesToClean=( $(echo ${UNION[@]} | tr ' ' '\n' | sort | uniq -u) )
 else
-    UPDATE_SITES__TO_CLEAN=( $(echo ${ALL_FOLDERS_WITH_UNQUALIFIED_VERSION_PREFIX[@]} | tr ' ' '\n' | sort) )
+    updateSitesToClean=( $(echo ${foldersWithUnqualifiedVersionPrefix[@]} | tr ' ' '\n' | sort) )
 fi
 
-if [ ${#UPDATE_SITES__TO_CLEAN[@]} -eq 0 ]; then
-    LSINFO "No build to clean for stream ${STREAM} (there are '${NB_BUILDS_TO_KEEP}' or less builds in this stream in '${UPDATE_NIGHTLY_HOME}'"
+if [ ${#updateSitesToClean[@]} -eq 0 ]; then
+    LSINFO "There are ${#foldersWithUnqualifiedVersionPrefix[@]} '${unqualifiedVersion}' builds, nothing to clean as we are keeping the ${nbBuildToKeep} most recent builds."
 else
-    LATEST_UPDATE_SITE__IN_STREAM=( $(composite-repository -location "${UPDATE_NIGHTLY_HOME}/${STREAM}/latest" -list) )
-    LSDEBUG "Current latest update site in stream '${STREAM}' is '${LATEST_UPDATE_SITE__IN_STREAM[@]}'"
+    for updateSiteToClean in ${updateSitesToClean[@]}; do
+        cleanNightly ${updateSiteToClean} "${UPDATE_NIGHTLY_HOME}/streams/${unqualifiedVersion}.x" "${UPDATE_NIGHTLY_HOME}/streams/${unqualifiedVersion}.x/latest"
+        cleanNightly ${updateSiteToClean} "${UPDATE_NIGHTLY_HOME}/streams/${minorVersion}.x"       "${UPDATE_NIGHTLY_HOME}/streams/${minorVersion}.x/latest"
+        cleanNightly ${updateSiteToClean} "${UPDATE_NIGHTLY_HOME}/streams/${majorVersion}.x"       "${UPDATE_NIGHTLY_HOME}/streams/${majorVersion}.x/latest"
+        cleanNightly ${updateSiteToClean} "${UPDATE_NIGHTLY_HOME}"                                 "${UPDATE_NIGHTLY_HOME}/latest"
 
-    LATEST_UPDATE_SITE__ALL_NIGHTLIES=( $(composite-repository -location "${UPDATE_NIGHTLY_HOME}/latest" -list) )
-    LSDEBUG "Current latest update site is '${LATEST_UPDATE_SITE__ALL_NIGHTLIES[@]}'"
-
-    for UPDATE_SITE__TO_CLEAN in ${UPDATE_SITES__TO_CLEAN[@]}
-    do
-        UPDATE_SITE_URL__TO_CLEAN="${UPDATE_NIGHTLY_URL}/${UPDATE_SITE__TO_CLEAN}"
-        LSINFO "Removing '${UPDATE_SITE__TO_CLEAN}' from '${UPDATE_NIGHTLY_HOME}/${STREAM}'"
-        composite-repository -location "${UPDATE_NIGHTLY_HOME}/${STREAM}" -remove "${UPDATE_SITE_URL__TO_CLEAN}"
-        
-        LSINFO "Removing '${UPDATE_SITE__TO_CLEAN}' from '${UPDATE_NIGHTLY_HOME}'"
-        composite-repository -location "${UPDATE_NIGHTLY_HOME}" -remove "${UPDATE_SITE_URL__TO_CLEAN}"
-
-        if [ ${#LATEST_UPDATE_SITE__IN_STREAM[@]} -gt 0 ]; then
-            if [ ${#LATEST_UPDATE_SITE__IN_STREAM[@]} -gt 1 ]; then
-                LSCRITICAL "There are more than a single update site referenced in the repository ${UPDATE_NIGHTLY_HOME}/${STREAM}/latest"
-                exit 1
-            elif [ "${UPDATE_SITE_URL__TO_CLEAN}" = "${LATEST_UPDATE_SITE__IN_STREAM[0]}" ]; then
-                LSINFO "Removing '${UPDATE_SITE__TO_CLEAN}' from '${UPDATE_NIGHTLY_HOME}/${STREAM}/latest'"
-                composite-repository -location "${UPDATE_NIGHTLY_HOME}/${STREAM}/latest" -remove "${UPDATE_SITE_URL__TO_CLEAN}"
-            fi
-        fi
-
-        if [ ${#LATEST_UPDATE_SITE__ALL_NIGHTLIES[@]} -gt 0 ]; then
-            if [ ${#LATEST_UPDATE_SITE__ALL_NIGHTLIES[@]} -gt 1 ]; then
-                LSCRITICAL "There are more than a single update site referenced in the repository ${UPDATE_NIGHTLY_HOME}/latest"
-                exit 1
-            elif [ "${UPDATE_SITE_URL__TO_CLEAN}" = "${LATEST_UPDATE_SITE__ALL_NIGHTLIES[0]}" ]; then
-                LSINFO "Removing '${UPDATE_SITE__TO_CLEAN}' from '${UPDATE_NIGHTLY_HOME}/latest'"
-                composite-repository -location "${UPDATE_NIGHTLY_HOME}/latest" -remove "${UPDATE_SITE_URL__TO_CLEAN}"
-            fi
-        fi
-
-        LSINFO "Removing folder '${UPDATE_NIGHTLY_HOME}/${UPDATE_SITE__TO_CLEAN}'"
-        rm -rf "${UPDATE_NIGHTLY_HOME}/${UPDATE_SITE__TO_CLEAN}"
+        LSINFO "Removing folder '${UPDATE_NIGHTLY_HOME}/${updateSiteToClean}'"
+        rm -rf "${UPDATE_NIGHTLY_HOME}/${updateSiteToClean}"
     done
 
-    LATEST_UPDATE_SITE__IN_STREAM=( $(composite-repository -location "${UPDATE_NIGHTLY_HOME}/${STREAM}/latest" -list) )
-    if [ ${#LATEST_UPDATE_SITE__IN_STREAM[@]} -eq 0 ]; then
-        cd ${UPDATE_NIGHTLY_HOME}
-        ALL_FILES_IN_STREAM=( $(echo "${UPDATE_SITE__UNQUALIFIED_VERSION}")* )
-        cd ${CURRENT_PWD}
-        if [ ${#ALL_FILES_IN_STREAM[@]} -gt 0 ]; then
-            LASTEST_UPDATE_SITE=$( echo ${ALL_FILES_IN_STREAM[@]} | tr ' ' '\n' | sort | tail -n 1 )
-            LSINFO "Redirecting '${UPDATE_NIGHTLY_HOME}/${STREAM}/latest' to '${UPDATE_NIGHTLY_URL}/${LASTEST_UPDATE_SITE}"
-            createRedirect "${UPDATE_NIGHTLY_HOME}/${STREAM}/latest" "${UPDATE_NIGHTLY_URL}/${LASTEST_UPDATE_SITE}" "${PROJECT_NAME} ${STREAM} latest nightly build"
-        else
-            LSINFO "There is no more builds in '${STREAM}', removing folder '${UPDATE_NIGHTLY_HOME}/${STREAM}'"
-            rm -rf "${UPDATE_NIGHTLY_HOME}/${STREAM}"
-        fi
-    else 
-        LSDEBUG "After clean up, latest update site in stream '${STREAM}' is '${LATEST_UPDATE_SITE__IN_STREAM[@]}'"
-    fi
+    updateLatest "${UPDATE_NIGHTLY_HOME}/streams/${unqualifiedVersion}.x/latest" "${unqualifiedVersion}" "${PROJECT_NAME} ${unqualifiedVersion}.x latest nightly build"
+    updateLatest "${UPDATE_NIGHTLY_HOME}/streams/${minorVersion}.x/latest"       "${minorVersion}"       "${PROJECT_NAME} ${minorVersion}.x latest nightly build"
+    updateLatest "${UPDATE_NIGHTLY_HOME}/streams/${majorVersion}.x/latest"       "${majorVersion}"       "${PROJECT_NAME} ${majorVersion}.x latest nightly build"
+    updateLatest "${UPDATE_NIGHTLY_HOME}/latest"                                 ""                      "${PROJECT_NAME} latest nightly build"
 
-    LATEST_UPDATE_SITE__ALL_NIGHTLIES=( $(composite-repository -location "${UPDATE_NIGHTLY_HOME}/latest" -list) )
-    if [ ${#LATEST_UPDATE_SITE__ALL_NIGHTLIES[@]} -eq 0 ]; then
-        cd ${UPDATE_NIGHTLY_HOME}
-        ALL_FILES=( $(echo * | tr ' ' '\n' | grep -E '[0-9]+\.[0-9]+\.[0-9]+.*' || true) )
-        cd ${CURRENT_PWD}
-        if [ ${#ALL_FILES[@]} -gt 0 ]; then
-            LASTEST_UPDATE_SITE=$( echo ${ALL_FILES[@]} | tr ' ' '\n' | sort | tail -n 1 )
-            LSINFO "Redirecting '${UPDATE_NIGHTLY_HOME}/latest' to '${UPDATE_NIGHTLY_URL}/${LASTEST_UPDATE_SITE}"
-            createRedirect "${UPDATE_NIGHTLY_HOME}/latest" "${UPDATE_NIGHTLY_URL}/${LASTEST_UPDATE_SITE}" "${PROJECT_NAME} latest nightly build"
-        else
-            LSINFO "There is no nightly builds in '${UPDATE_NIGHTLY_HOME}'"
-            LSDEBUG "Removing all files from '${UPDATE_NIGHTLY_HOME}'"
-            rm -rf "${UPDATE_NIGHTLY_HOME}/"*
-        fi
-    else
-        LSDEBUG "After clean up, latest update site is '${LATEST_UPDATE_SITE__ALL_NIGHTLIES[@]}'"
-    fi
 fi

@@ -16,7 +16,7 @@ __onExit() {
 	local RETURN=$?
 
 	LSDEBUG "Program will exit, saving the environment variables to a file for later debugging"
-	env | sort > env.txt
+	env | sort > "${WORKING_DIRECTORY}/env.txt"
 
 	if [ ${RETURN} -ne 0 -a ${RETURN} -lt 129 -o ${RETURN} -gt 165 ]; then
 		cd "${_ON_LOAD_PWD}"
@@ -33,5 +33,5 @@ __onInterruption() {
 	exit ${RETURN}
 }
 
-trap __onInterruption INT TERM
+trap __onInterruption INT TERM #ERR #DEBUG #RETURN
 trap __onExit EXIT

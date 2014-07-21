@@ -101,7 +101,7 @@ LSCALLSTACK () {
   for ((i=FRAMES-2; i>0; i--)); do
     echo '  File' \"${BASH_SOURCE[i+1]}\", line ${BASH_LINENO[i]}, in ${FUNCNAME[i+1]}
     # Grab the source code of the line
-    sed -n "${BASH_LINENO[i]}s/^[\t[:space:]]*/    /gp" "${BASH_SOURCE[i+1]}"
+    sed -n "${BASH_LINENO[i]} s/^[:space:]*/    /p" "${BASH_SOURCE[i+1]}"
     # TODO extract arugments from "${BASH_ARGC[@]}" and "${BASH_ARGV[@]}"
     # It requires `shopt -s extdebug'
   done

@@ -10,77 +10,81 @@
 #    Obeo - initial API and implementation
 # ====================================================================
 
-[ -z "${UPDATE_SITE__ARTIFACT_URL}" -o -z "${UPDATE_SITE__ARTIFACT_NAME}" -o -z "${UPDATE_SITE__UNQUALIFIED_VERSION}" -o -z "${UPDATE_SITE__QUALIFIED_VERSION}" ] && {
-     echo "Execution aborted.
+if [ $# -ne 2 ]; then
+     echo "Execution aborted. One or more of the required parameters is not set. 
 
-One or more of the required variables is not set. They are normally
-provided by the Hudson build.
+Usage: $0 artifactURL unqualifiedVersion qualifiedVersion
 
-- UPDATE_SITE__ARTIFACT_URL: the URL where the zipped update site to publish can be donwload.
-- UPDATE_SITE__ARTIFACT_NAME: the filename of the zipped update site.
-- UPDATE_SITE__UNQUALIFIED_VERSION: the unqualified version of the update site to publish.
-- UPDATE_SITE__QUALIFIED_VERSION: the qualified version of the update site to publish.
+- artifactURL: the URL where the zipped update site to publish can be donwload.
+- qualifiedVersion: the qualified version of the update site to publish.
 "
-    exit 1
-}
+fi
+
+artifactURL="${1}"
+qualifiedVersion="${2}"
 
 source "$(dirname "${0}")/init.sh"
 
-LSINFO "== Publishing nightly build '${PROJECT_NAME} ${UPDATE_SITE__QUALIFIED_VERSION}' == "
+LSINFO "== Publishing nightly build '${PROJECT_NAME} ${qualifiedVersion}' == "
+
+unqualifiedVersion="$(echo ${qualifiedVersion} | sed-regex 's/^([0-9]+\.[0-9]+\.[0-9]+)\..+$/\1/')"
+LSDEBUG "unqualifiedVersion is '${unqualifiedVersion}'"
+minorVersion="$(echo ${qualifiedVersion} | sed-regex 's/^([0-9]+\.[0-9]+)\.[0-9]+\..+$/\1/')"
+LSDEBUG "Minor stream name is '${minorVersion}.x'"
+majorVersion="$(echo ${qualifiedVersion} | sed-regex 's/^([0-9]+)\.[0-9]+\.[0-9]+\..+$/\1/')"
+LSDEBUG "Major stream name is '${majorVersion}.x'"
 
 # the update site
 
-for zip in *".zip"; do
-	LSDEBUG "Removing previous zipped update site '${zip}'"
-	rm -f ${zip}
-done 
+LSINFO "Downloading '${artifactURL}'"
+artifactName="update-site.zip"
+if [ -f "${WORKING_DIRECTORY}/${artifactName}" ]; then
+	rm -f "${WORKING_DIRECTORY}/${artifactName}"
+fi
+curl -s -k "${artifactURL}" > "${WORKING_DIRECTORY}/${artifactName}"
 
-for folder in "${UPDATE_SITE__UNQUALIFIED_VERSION}"*; do
-	LSDEBUG "Removing previous update site folder '${folder}'"
-	rm -rf ${folder}
-done
+LSINFO "Unziping '${artifactName}'"
+if [ -d "${WORKING_DIRECTORY}/update-site" ]; then
+	rm -rf "${WORKING_DIRECTORY}/update-site"
+fi
+unzip -qq "${WORKING_DIRECTORY}/${artifactName}" -d "${WORKING_DIRECTORY}/update-site"
 
-LSINFO "Downloading '${UPDATE_SITE__ARTIFACT_URL}'"
-wget -q --no-check-certificate ${UPDATE_SITE__ARTIFACT_URL} -O - > ${UPDATE_SITE__ARTIFACT_NAME}
-
-STREAM="$(echo ${UPDATE_SITE__UNQUALIFIED_VERSION} | sed-regex 's/^([0-9]+\.[0-9]+)\.[0-9]+$/\1/').x"
-LSDEBUG "Stream name is '${STREAM}'"
-
-LSINFO "Unziping '${UPDATE_SITE__ARTIFACT_NAME}'"
-unzip -qq ${UPDATE_SITE__ARTIFACT_NAME} -d ${UPDATE_SITE__QUALIFIED_VERSION}
-
-if [ ! -d "${UPDATE_NIGHTLY_HOME}" ]; then
+if [ ! -d "${UPDATE_NIGHTLY_HOME}/${qualifiedVersion}" ]; then
 	LSINFO "Creating folder '${UPDATE_NIGHTLY_HOME}'"
-	mkdir -p ${UPDATE_NIGHTLY_HOME}
+	mkdir -p "${UPDATE_NIGHTLY_HOME}/${qualifiedVersion}"
 else
-	LSDEBUG "Folder '${UPDATE_NIGHTLY_HOME}' already exists, do nothing"
+	LSDEBUG "Folder '${WORKING_DIRECTORY}/${UPDATE_NIGHTLY_HOME}' already exists, do nothing"
 fi
 LSINFO "Copying update site to '${UPDATE_NIGHTLY_HOME}'"
-cp -rf ${UPDATE_SITE__QUALIFIED_VERSION} ${UPDATE_NIGHTLY_HOME}
+cp -rf "${WORKING_DIRECTORY}/update-site/"* "${UPDATE_NIGHTLY_HOME}/${qualifiedVersion}"
 
-## stream update
+## streams update
 
-LSINFO "Adding '../${UPDATE_SITE__QUALIFIED_VERSION}' to '${UPDATE_NIGHTLY_HOME}/${STREAM}'"
-composite-repository \
-	-location "${UPDATE_NIGHTLY_HOME}/${STREAM}" \
-	-add "../${UPDATE_SITE__QUALIFIED_VERSION}" \
-	-repositoryName "${PROJECT_NAME} ${STREAM} nightly builds" \
-	-compressed
-createP2Index "${UPDATE_NIGHTLY_HOME}/${STREAM}"
+updateStream() {
+	local pathToVersion="${1}"
+	local stream="${2}"
 
-updateLatest "${UPDATE_NIGHTLY_HOME}/${STREAM}/latest" "${UPDATE_SITE__UNQUALIFIED_VERSION}" "../.." "${PROJECT_NAME} ${STREAM} latest nightly build"
+	local streamPath="${stream:+streams/${stream}.x}"
+	local repoPrefix="${PROJECT_NAME}${stream:+ ${stream}.x}"
 
-LSINFO "Adding '${UPDATE_SITE__QUALIFIED_VERSION}' to '${UPDATE_NIGHTLY_HOME}'"
-composite-repository \
-	-location "${UPDATE_NIGHTLY_HOME}" \
-	-add "${UPDATE_SITE__QUALIFIED_VERSION}" \
-	-repositoryName "${PROJECT_NAME} nightly builds" \
-	-compressed
-createP2Index "${UPDATE_NIGHTLY_HOME}"
+	LSINFO "Adding '${pathToVersion}' to '${UPDATE_NIGHTLY_HOME}/${streamPath}'"
 
-updateLatest "${UPDATE_NIGHTLY_HOME}/latest" "" ".." "${PROJECT_NAME} latest nightly build"
+	composite-repository \
+		-location "${UPDATE_NIGHTLY_HOME}/${streamPath}" \
+		-add "${pathToVersion}" \
+		-repositoryName "${repoPrefix} nightly builds" \
+		-compressed
+		createP2Index "${UPDATE_NIGHTLY_HOME}/${streamPath}"
 
-LSINFO "== '${PROJECT_NAME} ${UPDATE_SITE__QUALIFIED_VERSION}' has been published @ '${UPDATE_NIGHTLY_URL}/${UPDATE_SITE__QUALIFIED_VERSION}' == "
+	updateLatest "${UPDATE_NIGHTLY_HOME}/${streamPath}${streamPath:+/}latest" "${stream}" "${repoPrefix} latest nightly build"
+}
+
+updateStream "../../${qualifiedVersion}" "${unqualifiedVersion}"
+updateStream "../../${qualifiedVersion}" "${minorVersion}"
+updateStream "../../${qualifiedVersion}" "${majorVersion}"
+updateStream "${qualifiedVersion}"       ""
+
+LSINFO "== '${PROJECT_NAME} ${qualifiedVersion}' has been published @ '${UPDATE_NIGHTLY_URL}/${qualifiedVersion}' == "
 
 # the javadoc
 

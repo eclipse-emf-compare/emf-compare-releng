@@ -25,8 +25,6 @@ source "${SCRIPT_PATH}/../init.sh"
 source "${SCRIPT_PATH}/test-utils.sh"
 
 reports="${WORKING_DIRECTORY}/tests/results-clean-nightly.txt"
-beforeTest "${reports}"
-
 sitesToClean="$(pwd)/${SCRIPT_PATH}/data/sites-to-clean.tar.gz"
 
 # #zippedUpdateSiteURL="file:$(pwd)/${SCRIPT_PATH}/data/dummy-site.zip"
@@ -771,6 +769,8 @@ test14() {
     ${SCRIPT_PATH}/../clean-nightly.sh "1.0.0" 0
     assertEmptyFolder "${UPDATE_NIGHTLY_HOME}" "clean-nightly" "test14 all" "${reports}"
 }
+
+beforeTest "${reports}"
 
 test01
 test02

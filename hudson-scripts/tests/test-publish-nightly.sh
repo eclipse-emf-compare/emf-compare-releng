@@ -25,8 +25,6 @@ source "${SCRIPT_PATH}/../init.sh"
 source "${SCRIPT_PATH}/test-utils.sh"
 
 reports="${WORKING_DIRECTORY}/tests/results-publish-nightly.txt"
-beforeTest "${reports}"
-
 dummySite="file:$(pwd)/${SCRIPT_PATH}/data/dummy-site.zip"
 
 test01() {
@@ -407,6 +405,8 @@ test09() {
 	testCompositeRepositoryContent "file:${UPDATE_NIGHTLY_HOME}/streams/1.4.6.x/latest" "publish-nightly" "test09 1.4.6.x/latest" "${reports}" \
 		"file:${UPDATE_NIGHTLY_HOME}/1.4.6.A"
 }
+
+beforeTest "${reports}"
 
 test01
 test02

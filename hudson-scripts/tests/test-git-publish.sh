@@ -25,6 +25,11 @@ remotes="${WORKING_DIRECTORY}/tests/remotes"
 locals="${WORKING_DIRECTORY}/tests/locals"
 reports="${WORKING_DIRECTORY}/tests/results-git-publish.txt"
 
+beforeClass_this() {
+	rm -rf "${remotes}"
+	rm -rf "${locals}"
+}
+
 test01() {
 	LSTEST "Testing git_updateLocalRepository 01"
 	mkdir -p "${remotes}"
@@ -128,6 +133,7 @@ test04() {
 }
 
 beforeClass "${reports}"
+beforeClass_this
 
 test01
 test02

@@ -27,6 +27,20 @@ source "${SCRIPT_PATH}/test-utils.sh"
 reports="${WORKING_DIRECTORY}/tests/results-publish-nightly.txt"
 dummySite="file:$(pwd)/${SCRIPT_PATH}/data/dummy-site.zip"
 
+beforeClass_this() {
+	# cleaning test folder
+	if [ -d "${ECLIPSE_DOCUMENT_ROOT}" ]; then
+	    LSTEST "Removing test folder '${ECLIPSE_DOCUMENT_ROOT}'"
+	    rm -rf "${ECLIPSE_DOCUMENT_ROOT}"
+	fi
+	mkdir -p "${ECLIPSE_DOCUMENT_ROOT}"
+
+	if [ ! -d "${UPDATE_NIGHTLY_HOME}" ]; then
+	    mkdir -p "${UPDATE_NIGHTLY_HOME}"
+	fi
+
+}
+
 test01() {
 	LSTEST "Test publish-nightly 1.0.0.A"
 	${SCRIPT_PATH}/../publish-nightly.sh "${dummySite}" "1.0.0.A"
@@ -406,7 +420,8 @@ test09() {
 		"file:${UPDATE_NIGHTLY_HOME}/1.4.6.A"
 }
 
-beforeTest "${reports}"
+beforeClass_this
+beforeClass "${reports}"
 
 test01
 test02
@@ -418,4 +433,4 @@ test07
 test08
 test09
 
-afterTest "${reports}"
+afterClass "${reports}"

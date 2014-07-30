@@ -12,7 +12,6 @@
 
 # Test specific constants
 export WORKING_DIRECTORY="$(pwd)/target"
-export ECLIPSE_DOCUMENT_ROOT="${WORKING_DIRECTORY}/tests"
 
 export SCRIPT_PATH="$(dirname "${0}")"
 export INIT_PATH="${SCRIPT_PATH}/../init"
@@ -22,9 +21,9 @@ source "${SCRIPT_PATH}/test-utils.sh"
 
 dummyGitRepo="${SCRIPT_PATH}/data/dummy-git-repo.tar.gz"
 
-remotes="${ECLIPSE_DOCUMENT_ROOT}/remotes"
-locals="${ECLIPSE_DOCUMENT_ROOT}/locals"
-reports="${ECLIPSE_DOCUMENT_ROOT}/results-git-publish.txt"
+remotes="${WORKING_DIRECTORY}/tests/remotes"
+locals="${WORKING_DIRECTORY}/tests/locals"
+reports="${WORKING_DIRECTORY}/tests/results-git-publish.txt"
 
 test01() {
 	LSTEST "Testing git_updateLocalRepository 01"
@@ -128,11 +127,11 @@ test04() {
 	cd "${oldPwd}"
 }
 
-beforeTest "${reports}"
+beforeClass "${reports}"
 
 test01
 test02
 test03
 test04
 
-afterTest "${reports}"
+afterClass "${reports}"

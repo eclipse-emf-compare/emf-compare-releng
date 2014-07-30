@@ -41,6 +41,19 @@ sitesToClean="$(pwd)/${SCRIPT_PATH}/data/sites-to-clean.tar.gz"
 # done
 # exit 0
 
+beforeClass_this() {
+    # cleaning test folder
+    if [ -d "${ECLIPSE_DOCUMENT_ROOT}" ]; then
+        LSTEST "Removing test folder '${ECLIPSE_DOCUMENT_ROOT}'"
+        rm -rf "${ECLIPSE_DOCUMENT_ROOT}"
+    fi
+    mkdir -p "${ECLIPSE_DOCUMENT_ROOT}"
+
+    if [ ! -d "${UPDATE_NIGHTLY_HOME}" ]; then
+        mkdir -p "${UPDATE_NIGHTLY_HOME}"
+    fi
+}
+
 test01() {
     LSTEST "Test clean-nightly 01"
     rm -rf "${UPDATE_NIGHTLY_HOME}/"*
@@ -770,7 +783,8 @@ test14() {
     assertEmptyFolder "${UPDATE_NIGHTLY_HOME}" "clean-nightly" "test14 all" "${reports}"
 }
 
-beforeTest "${reports}"
+beforeClass_this
+beforeClass "${reports}"
 
 test01
 test02
@@ -787,4 +801,4 @@ test12
 test13
 test14
 
-afterTest "${reports}"
+afterClass "${reports}"

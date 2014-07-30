@@ -130,27 +130,17 @@ toJunitXML() {
 	echo "</testsuite>"
 }
 
-beforeTest() {
+beforeClass() {
 	local reports="${1}"
-	# cleaning test folder
-	if [ -d "${ECLIPSE_DOCUMENT_ROOT}" ]; then
-	    LSTEST "Removing test folder '${ECLIPSE_DOCUMENT_ROOT}'"
-	    rm -rf "${ECLIPSE_DOCUMENT_ROOT}"
-	fi
-	mkdir -p "${ECLIPSE_DOCUMENT_ROOT}"
-
+	
 	timestamp="$(date)"
 	echo "# ${timestamp}" > "${reports}"
 
 	xmlReports=$(echo "${reports}" | sed 's/\.txt/\.xml/')
 	echo "<!-- ${timestamp} -->" > "${xmlReports}"
-
-	if [ ! -d "${UPDATE_NIGHTLY_HOME}" ]; then
-	    mkdir -p "${UPDATE_NIGHTLY_HOME}"
-	fi
 }
 
-afterTest() {
+afterClass() {
 	local reports="${1}"
 	xmlReports=$(echo "${reports}" | sed 's/\.txt/\.xml/')
 	toJunitXML "${reports}" >> "${xmlReports}"

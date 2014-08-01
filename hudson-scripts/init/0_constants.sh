@@ -17,6 +17,8 @@ export ECLIPSE_DOCUMENT_ROOT="${ECLIPSE_DOCUMENT_ROOT:-/home/data/httpd}"
 
 # Private constants
 export UPDATE_FOLDER="${UPDATE_FOLDER:-updates}"
+export STREAMS_FOLDER="${STREAMS_FOLDER:-streams}"
+export LATEST_FOLDER="${LATEST_FOLDER:-latest}"
 export NIGHTLY_FOLDER="${NIGHTLY_FOLDER:-nightly}"
 export INTEGRATION_FOLDER="${INTEGRATION_FOLDER:-integration}"
 export RELEASES_FOLDER="${RELEASES_FOLDER:-releases}"

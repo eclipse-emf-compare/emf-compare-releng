@@ -27,65 +27,6 @@ source "$(dirname "${0}")/init.sh"
 
 LSINFO "== Publishing nightly build '${PROJECT_NAME} ${qualifiedVersion}' == "
 
-unqualifiedVersion="$(echo ${qualifiedVersion} | sed-regex 's/^([0-9]+\.[0-9]+\.[0-9]+)\..+$/\1/')"
-LSDEBUG "unqualifiedVersion is '${unqualifiedVersion}'"
-minorVersion="$(echo ${qualifiedVersion} | sed-regex 's/^([0-9]+\.[0-9]+)\.[0-9]+\..+$/\1/')"
-LSDEBUG "Minor stream name is '${minorVersion}.x'"
-majorVersion="$(echo ${qualifiedVersion} | sed-regex 's/^([0-9]+)\.[0-9]+\.[0-9]+\..+$/\1/')"
-LSDEBUG "Major stream name is '${majorVersion}.x'"
-
-# the update site
-
-LSINFO "Downloading '${artifactURL}'"
-artifactName="update-site.zip"
-if [ -f "${WORKING_DIRECTORY}/${artifactName}" ]; then
-	rm -f "${WORKING_DIRECTORY}/${artifactName}"
-fi
-curl -s -k "${artifactURL}" > "${WORKING_DIRECTORY}/${artifactName}"
-
-LSINFO "Unziping '${artifactName}'"
-if [ -d "${WORKING_DIRECTORY}/update-site" ]; then
-	rm -rf "${WORKING_DIRECTORY}/update-site"
-fi
-unzip -qq "${WORKING_DIRECTORY}/${artifactName}" -d "${WORKING_DIRECTORY}/update-site"
-
-if [ ! -d "${UPDATE_NIGHTLY_HOME}/${qualifiedVersion}" ]; then
-	LSINFO "Creating folder '${UPDATE_NIGHTLY_HOME}'"
-	mkdir -p "${UPDATE_NIGHTLY_HOME}/${qualifiedVersion}"
-else
-	LSDEBUG "Folder '${WORKING_DIRECTORY}/${UPDATE_NIGHTLY_HOME}' already exists, do nothing"
-fi
-LSINFO "Copying update site to '${UPDATE_NIGHTLY_HOME}'"
-cp -rf "${WORKING_DIRECTORY}/update-site/"* "${UPDATE_NIGHTLY_HOME}/${qualifiedVersion}"
-
-## streams update
-
-updateStream() {
-	local pathToVersion="${1}"
-	local stream="${2}"
-
-	local streamPath="${stream:+streams/${stream}.x}"
-	local repoPrefix="${PROJECT_NAME}${stream:+ ${stream}.x}"
-
-	LSINFO "Adding '${pathToVersion}' to '${UPDATE_NIGHTLY_HOME}/${streamPath}'"
-
-	composite-repository \
-		-location "${UPDATE_NIGHTLY_HOME}/${streamPath}" \
-		-add "${pathToVersion}" \
-		-repositoryName "${repoPrefix} nightly builds" \
-		-compressed
-		createP2Index "${UPDATE_NIGHTLY_HOME}/${streamPath}"
-
-	updateLatest "${UPDATE_NIGHTLY_HOME}/${streamPath}${streamPath:+/}latest" "${stream}" "${repoPrefix} latest nightly build"
-}
-
-updateStream "../../${qualifiedVersion}" "${unqualifiedVersion}"
-updateStream "../../${qualifiedVersion}" "${minorVersion}"
-updateStream "../../${qualifiedVersion}" "${majorVersion}"
-updateStream "${qualifiedVersion}"       ""
+publishUpdateSite "${WORKING_DIRECTORY}" "${PROJECT_NAME}" "nightly" "${artifactURL}" "${qualifiedVersion}" "${UPDATE_NIGHTLY_HOME}"
 
 LSINFO "== '${PROJECT_NAME} ${qualifiedVersion}' has been published @ '${UPDATE_NIGHTLY_URL}/${qualifiedVersion}' == "
-
-# the javadoc
-
-# the documentation

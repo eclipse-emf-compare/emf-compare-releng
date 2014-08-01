@@ -10,49 +10,6 @@
 #    Obeo - initial API and implementation
 # ====================================================================
 
-# retrieved from http://stackoverflow.com/a/12498485
-relpath() {
-    # both $1 and $2 are absolute paths beginning with /
-    # returns relative path to $2/$targetPath from $1/$sourcePath
-    local sourcePath=$1
-    local targetPath=$2
-
-    local common_part=$sourcePath # for now
-    local result="" # for now
- 
-    while [[ "${targetPath#$common_part}" == "${targetPath}" ]]; do
-        # no match, means that candidate common part is not correct
-        # go up one level (reduce common part)
-
-        common_part="$(dirname $common_part)"
-        # and record that we went back, with correct / handling
-        if [[ -z $result ]]; then
-            result=".."
-        else
-            result="../$result"
-        fi
-    done
-
-    if [[ $common_part == "/" ]]; then
-        # special case for root (no common path)
-        result="$result/"
-    fi
-
-    # since we now have identified the common part,
-    # compute the non-common part
-    local forward_part="${targetPath#$common_part}"
-
-    # and now stick all parts together
-    if [[ -n $result ]] && [[ -n $forward_part ]]; then
-        result="$result$forward_part"
-    elif [[ -n $forward_part ]]; then
-        # extra slash removal
-        result="${forward_part:1}"
-    fi
-
-    echo $result
-}
-
 updateLatest() {
     local latestPath=$1
     local prefix=$2
@@ -66,7 +23,7 @@ updateLatest() {
     if [ ${#allFilesWithPrefix[@]} -gt 0 ]; then
         local latestUpdatePath=$( echo ${allFilesWithPrefix[@]} | tr ' ' '\n' | sort | tail -n 1 )
         if [ ! -z "${latestUpdatePath}" ]; then
-            local relpath=$( relpath ${latestPath} ${UPDATE_NIGHTLY_HOME}/${latestUpdatePath} )
+            local relpath=$( relativize ${latestPath} ${UPDATE_NIGHTLY_HOME}/${latestUpdatePath} )
             local latestUpdateSite_onDisk="file:${UPDATE_NIGHTLY_HOME}/${latestUpdatePath}"
             LSDEBUG "Latest update site on disk is '${latestUpdateSite_onDisk}'"
             if [ -d "${latestPath}" ]; then
@@ -103,7 +60,7 @@ cleanNightly() {
     local latestInStreamPath=$3
 
     local updateSiteURLToClean="${UPDATE_NIGHTLY_URL}/${updateSiteToClean}"
-    local relpath=$( relpath ${streamPath} ${UPDATE_NIGHTLY_HOME}/${updateSiteToClean} )
+    local relpath=$( relativize ${streamPath} ${UPDATE_NIGHTLY_HOME}/${updateSiteToClean} )
 
     LSINFO "Removing '${relpath}' from '${streamPath}'"
     composite-repository -location "${streamPath}" -remove "${relpath}"
@@ -125,7 +82,7 @@ cleanNightly() {
                 LSCRITICAL "There are more than a single update site referenced in the repository ${latestInStreamPath}"
                 exit 1
             elif [ "${updateSiteURLToClean}" = "${latestUpdateSiteInStream[0]}" ]; then
-                relpath=$( relpath ${latestInStreamPath} ${UPDATE_NIGHTLY_HOME}/${updateSiteToClean} )
+                relpath=$( relativize ${latestInStreamPath} ${UPDATE_NIGHTLY_HOME}/${updateSiteToClean} )
                 LSINFO "Removing '${relpath}' from '${latestInStreamPath}'"
                 composite-repository -location "${latestInStreamPath}" -remove "${relpath}"
             fi

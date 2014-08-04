@@ -46,8 +46,8 @@ _initP2Admin() {
 	# prevents re-downloading the p2-admin archive each time.
 	if [ ! -f "${wd}/${p2AdminArchive}" ]; then
 		LSDEBUG "Unable to find p2-admin archive '${wd}/${p2AdminArchive}'"
-		LSINFO "Downloading p2-admin '${local p2AdminURL}'"
-		wget -q --no-check-certificate ${local p2AdminURL} -O - > "${wd}/${p2AdminArchive}"
+		LSINFO "Downloading p2-admin '${p2AdminURL}'"
+		wget -q --no-check-certificate ${p2AdminURL} -O - > "${wd}/${p2AdminArchive}"
 	fi
 
 	# this way, we are sure to have a clean p2-admin install, without any p2-cache.

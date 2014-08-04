@@ -90,6 +90,10 @@ createRedirect() {
 	local from="${1}"
 	local to="${2}"
 	local name="${3}"
+
+	if [ ! -f "${WORKING_DIRECTORY}/p2-admin/p2-admin" ]; then
+		_initP2Admin "${WORKING_DIRECTORY}"
+	fi
 	
 	LSDEBUG "Creating redirection from '${name}'@'${from}' to '${to}'"
 	mkdir -p "${from}"

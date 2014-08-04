@@ -66,9 +66,9 @@ else
         rm -rf "${UPDATE_NIGHTLY_HOME}/${updateSiteToClean}"
     done
 
-    updateLatest "${UPDATE_NIGHTLY_HOME}/streams/${unqualifiedVersion}.x/latest" "${unqualifiedVersion}" "${PROJECT_NAME} ${unqualifiedVersion}.x latest nightly build"
-    updateLatest "${UPDATE_NIGHTLY_HOME}/streams/${minorVersion}.x/latest"       "${minorVersion}"       "${PROJECT_NAME} ${minorVersion}.x latest nightly build"
-    updateLatest "${UPDATE_NIGHTLY_HOME}/streams/${majorVersion}.x/latest"       "${majorVersion}"       "${PROJECT_NAME} ${majorVersion}.x latest nightly build"
-    updateLatest "${UPDATE_NIGHTLY_HOME}/latest"                                 ""                      "${PROJECT_NAME} latest nightly build"
+    updateLatest "${UPDATE_NIGHTLY_HOME}/streams/${unqualifiedVersion}.x/latest" "${UPDATE_NIGHTLY_HOME}" "${unqualifiedVersion}" "${PROJECT_NAME} ${unqualifiedVersion}.x latest nightly build"
+    updateLatest "${UPDATE_NIGHTLY_HOME}/streams/${minorVersion}.x/latest"       "${UPDATE_NIGHTLY_HOME}" "${minorVersion}"       "${PROJECT_NAME} ${minorVersion}.x latest nightly build"
+    updateLatest "${UPDATE_NIGHTLY_HOME}/streams/${majorVersion}.x/latest"       "${UPDATE_NIGHTLY_HOME}" "${majorVersion}"       "${PROJECT_NAME} ${majorVersion}.x latest nightly build"
+    updateLatest "${UPDATE_NIGHTLY_HOME}/latest"                                 "${UPDATE_NIGHTLY_HOME}" ""                      "${PROJECT_NAME} latest nightly build"
 
 fi

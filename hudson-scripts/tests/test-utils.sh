@@ -67,7 +67,7 @@ testCompositeRepositoryContent() {
 	local file="${4}"
 	shift 4
 	local expectedContents=("$@")
-	actualContents=( $(composite-repository -location "${url}" -list) )
+	actualContents=( $(compositeRepository -location "${url}" -list) )
 	assertIntEquals ${#expectedContents[@]} ${#actualContents[@]} \
 		"${classname}" "${name} (size)" "${file}" "Contents size of composite repository '${url}' does not match"
 	for i in ${!actualContents[*]}; do

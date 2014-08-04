@@ -10,53 +10,67 @@
 #    Obeo - initial API and implementation
 # ====================================================================
 
-P2_ADMIN_VERSION="1.1.0"
+P2_ADMIN_VERSION="${P2_ADMIN_VERSION:-1.1.0}"
 
-if [[ "${OSTYPE}" == "linux"* || "${OSTYPE}" == "freebsd"* ]]; then
-	OSWS="linux.gtk"
-	FILE_EXT="tar.gz"
-elif [[ "${OSTYPE}" == "cygwin"* ]]; then
-	OSWS="win32.win32"
-	FILE_EXT="zip"
-elif [[ "${OSTYPE}" == "darwin"* ]]; then
-	OSWS="macosx.cocoa"
-	FILE_EXT="tar.gz"
-else
-	LSCRITICAL "Unknown 'OSTYPE'=${OSTYPE}."
-	exit -1
-fi
+_initP2Admin() {
+	local wd="${1}"
 
-if [[ $(uname -m) == *"64"* ]]; then
-	ARCH="x86_64"
-else
-	ARCH="x86"
-fi
+	local osws=""
+	local archiveFileExtension=""
+	if [[ "${OSTYPE}" == "linux"* || "${OSTYPE}" == "freebsd"* ]]; then
+		osws="linux.gtk"
+		archiveFileExtension="tar.gz"
+	elif [[ "${OSTYPE}" == "cygwin"* ]]; then
+		osws="win32.win32"
+		archiveFileExtension="zip"
+	elif [[ "${OSTYPE}" == "darwin"* ]]; then
+		osws="macosx.cocoa"
+		archiveFileExtension="tar.gz"
+	else
+		LSCRITICAL "Unknown 'OSTYPE'=${OSTYPE}."
+		exit -1
+	fi
 
-PLATFORM_SPECIFIER="${OSWS}.${ARCH}"
-LSDEBUG "Platform specifier is '${PLATFORM_SPECIFIER}'"
-P2_ADMIN_ARCHIVE="p2-admin-${P2_ADMIN_VERSION}-${PLATFORM_SPECIFIER}.${FILE_EXT}"
-P2_ADMIN_URL="https://github.com/mbarbero/p2-admin/releases/download/v${P2_ADMIN_VERSION}/${P2_ADMIN_ARCHIVE}"
+	local arch=""
+	if [[ $(uname -m) == *"64"* ]]; then
+		arch="x86_64"
+	else
+		arch="x86"
+	fi
 
-# prevents re-downloading the p2-admin archive each time.
-if [ ! -f "${WORKING_DIRECTORY}/${P2_ADMIN_ARCHIVE}" ]; then
-	LSDEBUG "Unable to find p2-admin archive '${WORKING_DIRECTORY}/${P2_ADMIN_ARCHIVE}'"
-	LSINFO "Downloading p2-admin '${P2_ADMIN_URL}'"
-	wget -q --no-check-certificate ${P2_ADMIN_URL} -O - > "${WORKING_DIRECTORY}/${P2_ADMIN_ARCHIVE}"
-fi
+	local platformSpecifier="${osws}.${arch}"
+	LSDEBUG "Platform specifier is '${platformSpecifier}'"
+	local p2AdminArchive="p2-admin-${P2_ADMIN_VERSION}-${platformSpecifier}.${archiveFileExtension}"
+	local p2AdminURL="https://github.com/mbarbero/p2-admin/releases/download/v${P2_ADMIN_VERSION}/${p2AdminArchive}"
 
-# this way, we are sure to have a clean p2-admin install, without any p2-cache.
-# the p2-admin archive will be unzipped afterwards.
-if [ -d '${WORKING_DIRECTORY}/p2-admin' ]; then
-	LSDEBUG "Removing previous 'p2-admin' folder"
-	rm -rf "${WORKING_DIRECTORY}/p2-admin"
-fi
+	# prevents re-downloading the p2-admin archive each time.
+	if [ ! -f "${wd}/${p2AdminArchive}" ]; then
+		LSDEBUG "Unable to find p2-admin archive '${wd}/${p2AdminArchive}'"
+		LSINFO "Downloading p2-admin '${local p2AdminURL}'"
+		wget -q --no-check-certificate ${local p2AdminURL} -O - > "${wd}/${p2AdminArchive}"
+	fi
 
-LSDEBUG "Unziping '${P2_ADMIN_ARCHIVE}'"
-tar zxf "${WORKING_DIRECTORY}/${P2_ADMIN_ARCHIVE}" -C "${WORKING_DIRECTORY}"
+	# this way, we are sure to have a clean p2-admin install, without any p2-cache.
+	# the p2-admin archive will be unzipped afterwards.
+	if [ -d '${wd}/p2-admin' ]; then
+		LSDEBUG "Removing previous 'p2-admin' folder"
+		rm -rf "${wd}/p2-admin"
+	fi
 
-LSDEBUG "Defining p2 aliases"
-LSDEBUG "composite-repository='${WORKING_DIRECTORY}/p2-admin/p2-admin -vm ${JAVA_HOME}/bin/java -application org.eclipselabs.equinox.p2.composite.repository'"
-alias composite-repository="${WORKING_DIRECTORY}/p2-admin/p2-admin -vm ${JAVA_HOME}/bin/java -application org.eclipselabs.equinox.p2.composite.repository"
+	LSDEBUG "Unziping '${p2AdminArchive}'"
+	tar zxf "${wd}/${p2AdminArchive}" -C "${wd}"
+}
+
+compositeRepository() {
+	if [ ! -f "${WORKING_DIRECTORY}/p2-admin/p2-admin" ]; then
+		_initP2Admin "${WORKING_DIRECTORY}"
+	fi
+
+	"${WORKING_DIRECTORY}/p2-admin/p2-admin" \
+		-vm "${JAVA_HOME}/bin/java" \
+		-application "org.eclipselabs.equinox.p2.composite.repository" \
+		$@
+}
 
 # Create a p2 index file for composite repositories
 createP2Index() {
@@ -81,6 +95,6 @@ createRedirect() {
 	mkdir -p "${from}"
 	rm -f "${from}/compositeArtifacts."*
 	rm -f "${from}/compositeContent."*
-	composite-repository -location "${from}" -add "${to}" -repositoryName "${name}" -compressed
+	compositeRepository -location "${from}" -add "${to}" -repositoryName "${name}" -compressed
 	createP2Index ${from}
 }

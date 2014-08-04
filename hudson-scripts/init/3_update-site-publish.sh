@@ -26,17 +26,17 @@ _retrieveZippedArtifact() {
 _publishUpdateSiteInStream() {
 	local projectName="${1}"
 	local category="${2}"
-	local home="${3}"
+	local updateHome="${3}"
 	local qualifiedVersion="${4}"
 	local stream="${5}"
 
 	local repoLabelPrefix="${projectName}${stream:+ ${stream}.x}"
 
-	local streamPath="${home}${stream:+/${STREAMS_FOLDER}/${stream}.x}"
-	local relPathToUpdateSite=$( relativize "${streamPath}" "${home}/${qualifiedVersion}" )
+	local streamPath="${updateHome}${stream:+/${STREAMS_FOLDER}/${stream}.x}"
+	local relPathToUpdateSite=$( relativize "${streamPath}" "${updateHome}/${qualifiedVersion}" )
 
 	LSDEBUG "Adding '${relPathToUpdateSite}' to composite repository '${streamPath}'"
-	composite-repository \
+	compositeRepository \
 		-location "${streamPath}" \
 		-add "${relPathToUpdateSite}" \
 		-repositoryName "${repoLabelPrefix} ${category} builds" \
@@ -44,7 +44,7 @@ _publishUpdateSiteInStream() {
 		createP2Index "${streamPath}"
 
 	LSDEBUG "Updating latest of stream '${stream}' @ '${streamPath}'"
-	updateLatest "${streamPath}${streamPath:+/}${LATEST_FOLDER}" "${stream}" "${repoLabelPrefix} latest ${category} build"
+	updateLatest "${streamPath}${streamPath:+/}${LATEST_FOLDER}" "${updateHome}" "${stream}" "${repoLabelPrefix} latest ${category} build"
 }
 
 publishUpdateSite() {
@@ -53,7 +53,7 @@ publishUpdateSite() {
 	local category="${3}"
 	local artifactURL="${4}"
 	local qualifiedVersion="${5}"
-	local home="${6}"
+	local updateHome="${6}"
 
 	unqualifiedVersion="$(echo ${qualifiedVersion} | sed-regex 's/^([0-9]+\.[0-9]+\.[0-9]+)\..+$/\1/')"
 	LSDEBUG "unqualifiedVersion is '${unqualifiedVersion}'"
@@ -64,19 +64,20 @@ publishUpdateSite() {
 
 	# the update site
 	LSINFO "Downloading '${artifactURL}'"
-	_retrieveZippedArtifact "${artifactURL}" "${wd}/update-site-${qualifiedVersion}.zip" "${wd}/update-site-${qualifiedVersion}"
+	local targetUpdateSiteName="update-site-${qualifiedVersion}"
+	_retrieveZippedArtifact "${artifactURL}" "${wd}/${targetUpdateSiteName}.zip" "${wd}/${targetUpdateSiteName}"
 
-	if [ ! -d "${home}/${qualifiedVersion}" ]; then
-		LSDEBUG "Creating folder '${home}/${qualifiedVersion}'"
-		mkdir -p "${home}/${qualifiedVersion}"
+	if [ ! -d "${updateHome}/${qualifiedVersion}" ]; then
+		LSDEBUG "Creating folder '${updateHome}/${qualifiedVersion}'"
+		mkdir -p "${updateHome}/${qualifiedVersion}"
 	fi
 
-	LSINFO "Copying update site to '${home}/${qualifiedVersion}'"
-	cp -Rf "${wd}/update-site/"* "${home}/${qualifiedVersion}"
+	LSINFO "Copying update site to '${updateHome}/${qualifiedVersion}'"
+	cp -Rf "${wd}/${targetUpdateSiteName}/"* "${updateHome}/${qualifiedVersion}"
 
 	## streams update
-	_publishUpdateSiteInStream "${projectName}" "${category}" "${home}" "${qualifiedVersion}" "${unqualifiedVersion}"
-	_publishUpdateSiteInStream "${projectName}" "${category}" "${home}" "${qualifiedVersion}" "${minorVersion}"
-	_publishUpdateSiteInStream "${projectName}" "${category}" "${home}" "${qualifiedVersion}" "${majorVersion}"
-	_publishUpdateSiteInStream "${projectName}" "${category}" "${home}" "${qualifiedVersion}" ""
+	_publishUpdateSiteInStream "${projectName}" "${category}" "${updateHome}" "${qualifiedVersion}" "${unqualifiedVersion}"
+	_publishUpdateSiteInStream "${projectName}" "${category}" "${updateHome}" "${qualifiedVersion}" "${minorVersion}"
+	_publishUpdateSiteInStream "${projectName}" "${category}" "${updateHome}" "${qualifiedVersion}" "${majorVersion}"
+	_publishUpdateSiteInStream "${projectName}" "${category}" "${updateHome}" "${qualifiedVersion}" ""
 }

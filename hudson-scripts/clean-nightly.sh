@@ -28,4 +28,4 @@ source "$(dirname "${0}")/init.sh"
 
 LSINFO "== Clean up '${unqualifiedVersion}' nightly builds (will keep the ${nbBuildToKeep} most recent) =="
 
-cleanUpdateSites "${UPDATE_NIGHTLY_HOME}" "${PROJECT_NAME}" "${NIGHTLY_FOLDER}" "${unqualifiedVersion}" "${nbBuildToKeep}"
+cleanUpdateSites "${UPDATE_NIGHTLY_HOME}" "${UPDATE_NIGHTLY_URL}" "${PROJECT_NAME}" "${NIGHTLY_FOLDER}" "${unqualifiedVersion}" "${nbBuildToKeep}"

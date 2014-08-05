@@ -12,11 +12,12 @@
 
 _cleanNightly() {
     local updateHome="${1}"
-    local streamPath="${2}"
-    local updateSiteToClean="${3}"
+    local updateURL="${2}"
+    local streamPath="${3}"
+    local updateSiteToClean="${4}"
     
     local latestInStreamPath="${streamPath}/${LATEST_FOLDER}"
-    local updateSiteURLToClean="${UPDATE_NIGHTLY_URL}/${updateSiteToClean}"
+    local updateSiteURLToClean="${updateURL}/${updateSiteToClean}"
     local relpath=$( relativize ${streamPath} ${updateHome}/${updateSiteToClean} )
 
     LSINFO "Removing '${relpath}' from '${streamPath}'"
@@ -51,10 +52,11 @@ _cleanNightly() {
 
 cleanUpdateSites() {
     local updateHome="${1}"
-    local projectName="${2}"
-    local category="${3}"
-    local unqualifiedVersion="${4}"
-    local nbBuildToKeep="${5:-5}"
+    local updateURL="${2}"
+    local projectName="${3}"
+    local category="${4}"
+    local unqualifiedVersion="${5}"
+    local nbBuildToKeep="${6:-5}"
 
     local currentPwd=$(pwd)
     cd "${updateHome}"
@@ -67,24 +69,24 @@ cleanUpdateSites() {
     fi
 
     if [ ${nbBuildToKeep} -gt 0 ]; then
-        updateSiteToKeep=( $(echo ${foldersWithUnqualifiedVersionPrefix[@]} | tr ' ' '\n' | sort -r | head -n ${nbBuildToKeep}) )
-        UNION=( ${updateSiteToKeep[@]} ${foldersWithUnqualifiedVersionPrefix[@]} )
-        updateSitesToClean=( $(echo ${UNION[@]} | tr ' ' '\n' | sort | uniq -u) )
+        local updateSiteToKeep=( $(echo ${foldersWithUnqualifiedVersionPrefix[@]} | tr ' ' '\n' | sort -r | head -n ${nbBuildToKeep}) )
+        local UNION=( ${updateSiteToKeep[@]} ${foldersWithUnqualifiedVersionPrefix[@]} )
+        local updateSitesToClean=( $(echo ${UNION[@]} | tr ' ' '\n' | sort | uniq -u) )
     else
-        updateSitesToClean=( $(echo ${foldersWithUnqualifiedVersionPrefix[@]} | tr ' ' '\n' | sort) )
+        local updateSitesToClean=( $(echo ${foldersWithUnqualifiedVersionPrefix[@]} | tr ' ' '\n' | sort) )
     fi
 
     if [ ${#updateSitesToClean[@]} -eq 0 ]; then
         LSINFO "There are ${#foldersWithUnqualifiedVersionPrefix[@]} '${unqualifiedVersion}' builds, nothing to clean as we are keeping the ${nbBuildToKeep} most recent builds."
     else
-        _minorVersion="$(minorVersion ${unqualifiedVersion})"
-        _majorVersion="$(majorVersion ${unqualifiedVersion})"
+        local _minorVersion="$(minorVersion ${unqualifiedVersion})"
+        local _majorVersion="$(majorVersion ${unqualifiedVersion})"
 
         for updateSiteToClean in ${updateSitesToClean[@]}; do
-            _cleanNightly "${updateHome}" "${updateHome}/${STREAMS_FOLDER}/${unqualifiedVersion}${STREAM_NAME_SUFFIX}"  "${updateSiteToClean}"
-            _cleanNightly "${updateHome}" "${updateHome}/${STREAMS_FOLDER}/${_minorVersion}${STREAM_NAME_SUFFIX}"       "${updateSiteToClean}"
-            _cleanNightly "${updateHome}" "${updateHome}/${STREAMS_FOLDER}/${_majorVersion}${STREAM_NAME_SUFFIX}"       "${updateSiteToClean}"
-            _cleanNightly "${updateHome}" "${updateHome}"                                                               "${updateSiteToClean}"
+            _cleanNightly "${updateHome}" "${updateURL}" "${updateHome}/${STREAMS_FOLDER}/${unqualifiedVersion}${STREAM_NAME_SUFFIX}"  "${updateSiteToClean}"
+            _cleanNightly "${updateHome}" "${updateURL}" "${updateHome}/${STREAMS_FOLDER}/${_minorVersion}${STREAM_NAME_SUFFIX}"       "${updateSiteToClean}"
+            _cleanNightly "${updateHome}" "${updateURL}" "${updateHome}/${STREAMS_FOLDER}/${_majorVersion}${STREAM_NAME_SUFFIX}"       "${updateSiteToClean}"
+            _cleanNightly "${updateHome}" "${updateURL}" "${updateHome}"                                                               "${updateSiteToClean}"
 
             LSINFO "Removing folder '${updateHome}/${updateSiteToClean}'"
             rm -rf "${updateHome}/${updateSiteToClean}"

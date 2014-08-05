@@ -23,16 +23,37 @@ _retrieveZippedArtifact() {
 	unzip -qq "${localArtifact}" -d "${unzipTo}"
 }
 
+_updateLatestUpdateSite() {
+	local updateHome="${1}"
+    local absolutePathToLatest="${2}"
+    local prefix="${3}"
+    local latestRepoLabel="${4}"
+
+    local currentPwd=$(pwd)
+    cd "${updateHome}"
+    local allFilesWithPrefix=( $(echo "${prefix}"* | tr ' ' '\n' | grep -E '[0-9]+\.[0-9]+\.[0-9]+.*' || true) )    
+    cd "${currentPwd}"
+
+    if [ ${#allFilesWithPrefix[@]} -gt 0 ]; then
+        local latestUpdatePath=$( echo ${allFilesWithPrefix[@]} | tr ' ' '\n' | sort | tail -n 1 )
+        local relpath=$( relativize ${absolutePathToLatest} ${updateHome}/${latestUpdatePath} )
+        LSINFO "Creating redirection from '${absolutePathToLatest}' to '${latestUpdatePath}'" 
+        createRedirect "${absolutePathToLatest}" "${relpath}" "${latestRepoLabel}"
+    else
+        LSDEBUG "No folder in '${updateHome}' have a name that start with '${prefix}' and that match the regex '[0-9]+\.[0-9]+\.[0-9]+.*'."
+    fi
+}
+
 _publishUpdateSiteInStream() {
-	local projectName="${1}"
-	local category="${2}"
-	local updateHome="${3}"
+	local updateHome="${1}"
+	local projectName="${2}"
+	local category="${3}"
 	local qualifiedVersion="${4}"
 	local stream="${5}"
 
-	local repoLabelPrefix="${projectName}${stream:+ ${stream}.x}"
+	local repoLabelPrefix="${projectName}${stream:+ ${stream}${STREAM_NAME_SUFFIX}}"
 
-	local streamPath="${updateHome}${stream:+/${STREAMS_FOLDER}/${stream}.x}"
+	local streamPath="${updateHome}${stream:+/${STREAMS_FOLDER}/${stream}${STREAM_NAME_SUFFIX}}"
 	local relPathToUpdateSite=$( relativize "${streamPath}" "${updateHome}/${qualifiedVersion}" )
 
 	LSDEBUG "Adding '${relPathToUpdateSite}' to composite repository '${streamPath}'"
@@ -43,8 +64,8 @@ _publishUpdateSiteInStream() {
 		-compressed
 		createP2Index "${streamPath}"
 
-	LSDEBUG "Updating latest of stream '${stream}' @ '${streamPath}'"
-	updateLatest "${streamPath}${streamPath:+/}${LATEST_FOLDER}" "${updateHome}" "${stream}" "${repoLabelPrefix} latest ${category} build"
+	LSDEBUG "Updating latest of stream '${stream}${STREAM_NAME_SUFFIX}' @ '${streamPath}'"
+	_updateLatestUpdateSite "${updateHome}" "${streamPath}${streamPath:+/}${LATEST_FOLDER}" "${stream}" "${repoLabelPrefix} latest ${category} build"
 }
 
 publishUpdateSite() {
@@ -54,13 +75,6 @@ publishUpdateSite() {
 	local artifactURL="${4}"
 	local qualifiedVersion="${5}"
 	local updateHome="${6}"
-
-	unqualifiedVersion="$(echo ${qualifiedVersion} | sed-regex 's/^([0-9]+\.[0-9]+\.[0-9]+)\..+$/\1/')"
-	LSDEBUG "unqualifiedVersion is '${unqualifiedVersion}'"
-	minorVersion="$(echo ${qualifiedVersion} | sed-regex 's/^([0-9]+\.[0-9]+)\.[0-9]+\..+$/\1/')"
-	LSDEBUG "Minor stream name is '${minorVersion}.x'"
-	majorVersion="$(echo ${qualifiedVersion} | sed-regex 's/^([0-9]+)\.[0-9]+\.[0-9]+\..+$/\1/')"
-	LSDEBUG "Major stream name is '${majorVersion}.x'"
 
 	# the update site
 	LSINFO "Downloading '${artifactURL}'"
@@ -76,8 +90,8 @@ publishUpdateSite() {
 	cp -Rf "${wd}/${targetUpdateSiteName}/"* "${updateHome}/${qualifiedVersion}"
 
 	## streams update
-	_publishUpdateSiteInStream "${projectName}" "${category}" "${updateHome}" "${qualifiedVersion}" "${unqualifiedVersion}"
-	_publishUpdateSiteInStream "${projectName}" "${category}" "${updateHome}" "${qualifiedVersion}" "${minorVersion}"
-	_publishUpdateSiteInStream "${projectName}" "${category}" "${updateHome}" "${qualifiedVersion}" "${majorVersion}"
-	_publishUpdateSiteInStream "${projectName}" "${category}" "${updateHome}" "${qualifiedVersion}" ""
+	_publishUpdateSiteInStream "${updateHome}" "${projectName}" "${category}" "${qualifiedVersion}" "$(unqualifiedVersion ${qualifiedVersion})"
+	_publishUpdateSiteInStream "${updateHome}" "${projectName}" "${category}" "${qualifiedVersion}" "$(minorVersion ${qualifiedVersion})"
+	_publishUpdateSiteInStream "${updateHome}" "${projectName}" "${category}" "${qualifiedVersion}" "$(majorVersion ${qualifiedVersion})"
+	_publishUpdateSiteInStream "${updateHome}" "${projectName}" "${category}" "${qualifiedVersion}" ""
 }

@@ -11,7 +11,7 @@
 # ====================================================================
 
 # Test specific constants
-export WORKING_DIRECTORY="$(pwd)/target"
+export WORKING_DIRECTORY="$(pwd)/target/tests/git-publish"
 
 export SCRIPT_PATH="$(dirname "${0}")"
 export INIT_PATH="${SCRIPT_PATH}/../init"
@@ -21,9 +21,9 @@ source "${SCRIPT_PATH}/test-utils.sh"
 
 dummyGitRepo="${SCRIPT_PATH}/data/dummy-git-repo.tar.gz"
 
-remotes="${WORKING_DIRECTORY}/tests/remotes"
-locals="${WORKING_DIRECTORY}/tests/locals"
-reports="${WORKING_DIRECTORY}/tests/results-git-publish.txt"
+remotes="${WORKING_DIRECTORY}/remotes"
+locals="${WORKING_DIRECTORY}/locals"
+reports="$(pwd)/target/tests/results-git-publish.txt"
 
 beforeClass_this() {
 	rm -rf "${remotes}"

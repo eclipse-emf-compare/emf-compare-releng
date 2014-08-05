@@ -27,6 +27,6 @@ source "$(dirname "${0}")/init.sh"
 
 LSINFO "== Publishing nightly build '${PROJECT_NAME} ${qualifiedVersion}' == "
 
-publishUpdateSite "${WORKING_DIRECTORY}" "${PROJECT_NAME}" "nightly" "${artifactURL}" "${qualifiedVersion}" "${UPDATE_NIGHTLY_HOME}"
+publishUpdateSite "${WORKING_DIRECTORY}" "${PROJECT_NAME}" "${NIGHTLY_FOLDER}" "${artifactURL}" "${qualifiedVersion}" "${UPDATE_NIGHTLY_HOME}"
 
 LSINFO "== '${PROJECT_NAME} ${qualifiedVersion}' has been published @ '${UPDATE_NIGHTLY_URL}/${qualifiedVersion}' == "

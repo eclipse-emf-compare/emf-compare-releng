@@ -11,12 +11,12 @@
 # ====================================================================
 
 # Test specific constants
-export WORKING_DIRECTORY="$(pwd)/target"
+export WORKING_DIRECTORY="$(pwd)/target/tests/cleaner"
 
 export PROJECT_NAME="Test Project"
-export DOWNLOAD_PATH="cleaner"
-export ECLIPSE_DOCUMENT_ROOT="${WORKING_DIRECTORY}/tests/documentRoot"
-export DOWNLOAD_URL="file:${ECLIPSE_DOCUMENT_ROOT}/${DOWNLOAD_PATH}"
+export DOWNLOAD_PATH="download.path"
+export DOCUMENT_ROOT="${WORKING_DIRECTORY}/documentRoot"
+export DOWNLOAD_URL="file:${DOCUMENT_ROOT}/${DOWNLOAD_PATH}"
 
 export SCRIPT_PATH="$(dirname "${0}")"
 export INIT_PATH="${SCRIPT_PATH}/../init"
@@ -24,30 +24,16 @@ export INIT_PATH="${SCRIPT_PATH}/../init"
 source "${SCRIPT_PATH}/../init.sh"
 source "${SCRIPT_PATH}/test-utils.sh"
 
-reports="${WORKING_DIRECTORY}/tests/results-clean-nightly.txt"
+reports="$(pwd)/target/tests/results-clean-nightly.txt"
 sitesToClean="$(pwd)/${SCRIPT_PATH}/data/sites-to-clean.tar.gz"
-
-# #zippedUpdateSiteURL="file:$(pwd)/${SCRIPT_PATH}/data/dummy-site.zip"
-# for M in "1" "2" "3"; do 
-#     for m in "0" "1" "2"; do 
-#         for u in "0" "1" "2"; do 
-#             for q in "A" "B" "C"; do 
-#                 printf '"file:${UPDATE_NIGHTLY_HOME}/'"$M.$m.$u.$q"'" '
-# #               ${SCRIPT_PATH}/../publish-nightly.sh "${zippedUpdateSiteURL}" "$M.$m.$u.$q"
-#             done 
-#             printf '\\\n'
-#         done 
-#     done 
-# done
-# exit 0
 
 beforeClass_this() {
     # cleaning test folder
-    if [ -d "${ECLIPSE_DOCUMENT_ROOT}" ]; then
-        LSTEST "Removing test folder '${ECLIPSE_DOCUMENT_ROOT}'"
-        rm -rf "${ECLIPSE_DOCUMENT_ROOT}"
+    if [ -d "${DOCUMENT_ROOT}" ]; then
+        LSTEST "Removing test folder '${DOCUMENT_ROOT}'"
+        rm -rf "${DOCUMENT_ROOT}"
     fi
-    mkdir -p "${ECLIPSE_DOCUMENT_ROOT}"
+    mkdir -p "${DOCUMENT_ROOT}"
 
     if [ ! -d "${UPDATE_NIGHTLY_HOME}" ]; then
         mkdir -p "${UPDATE_NIGHTLY_HOME}"

@@ -13,21 +13,25 @@
 # Project specific
 export PROJECT_NAME="${PROJECT_NAME:-EMF Compare}"
 export DOWNLOAD_PATH="${DOWNLOAD_PATH:-download.eclipse.org/modeling/emf/compare}"
-export ECLIPSE_DOCUMENT_ROOT="${ECLIPSE_DOCUMENT_ROOT:-/home/data/httpd}"
+export DOCUMENT_ROOT="${DOCUMENT_ROOT:-/home/data/httpd}"
 
-# Private constants
+# default value constants
 export UPDATE_FOLDER="${UPDATE_FOLDER:-updates}"
+
 export STREAMS_FOLDER="${STREAMS_FOLDER:-streams}"
+export STREAM_NAME_SUFFIX="${STREAM_NAME_SUFFIX:-.x}"
 export LATEST_FOLDER="${LATEST_FOLDER:-latest}"
+
 export NIGHTLY_FOLDER="${NIGHTLY_FOLDER:-nightly}"
 export INTEGRATION_FOLDER="${INTEGRATION_FOLDER:-integration}"
 export RELEASES_FOLDER="${RELEASES_FOLDER:-releases}"
+
 export SIMREL_FOLDER="${SIMREL_FOLDER:-simrel}"
 export STAGING_FOLDER="${STAGING_FOLDER:-${SIMREL_FOLDER}/staging}"
 export MAINTENANCE_FOLDER="${MAINTENANCE_FOLDER:-${SIMREL_FOLDER}/maintenance}"
 export MILESTONES_FOLDER="${MILESTONES_FOLDER:-${SIMREL_FOLDER}/milestones}"
 
-export DOWNLOAD_HOME="${DOWNLOAD_HOME:-${ECLIPSE_DOCUMENT_ROOT}/${DOWNLOAD_PATH}}"
+export DOWNLOAD_HOME="${DOWNLOAD_HOME:-${DOCUMENT_ROOT}/${DOWNLOAD_PATH}}"
 export DOWNLOAD_URL="${DOWNLOAD_URL:-http://${DOWNLOAD_PATH}}"
 
 # Computed from above

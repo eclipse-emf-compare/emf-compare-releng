@@ -67,7 +67,7 @@ _LS_FIND_LEVEL_STR () {
 LSLOG () {
   local LEVEL=${1}
   shift
-  (( LEVEL < LS_LEVEL )) && return 1
+  (( LEVEL < LS_LEVEL )) && return 0
   _LS_FIND_LEVEL_STR ${LEVEL}
   # if no message was passed, read it from STDIN
   local _MSG

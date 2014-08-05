@@ -13,37 +13,38 @@
 _cleanNightly() {
     local updateHome="${1}"
     local updateURL="${2}"
-    local streamPath="${updateHome}${3:+/${3}}"
+    local streamName="${3}"
     local updateSiteToClean="${4}"
     
-    local latestInStreamPath="${streamPath}/${LATEST_FOLDER}"
-    local updateSiteURLToClean="${updateURL}/${updateSiteToClean}"
-    local relpath=$( relativize ${streamPath} ${updateHome}/${updateSiteToClean} )
+    local _streamAbsolutePath=$( streamAbsolutePath "${updateHome}" "${streamName}" )
+    local relpath=$( relativize "${_streamAbsolutePath}" "${updateHome}/${updateSiteToClean}" )
 
-    LSINFO "Removing '${relpath}' from '${streamPath}'"
-    compositeRepository -location "${streamPath}" -remove "${relpath}"
+    LSDEBUG "Removing '${relpath}' from '${_streamAbsolutePath}'"
+    compositeRepository -location "${_streamAbsolutePath}" -remove "${relpath}"
     
     ##check the number of children in streamPath, if 0 remove folder (no need to check latest)
-    local streamPathChild=( $(compositeRepository -location "${streamPath}" -list) )
-    if [ ${#streamPathChild[@]} -eq 0 ]; then
-        LSINFO "Removing folder '${streamPath}' as it has no children anymore"
-        if [ "${streamPath}" = "${updateHome}" ]; then
+    local streamPathChildren=( $(compositeRepository -location "${_streamAbsolutePath}" -list) )
+    if [ ${#streamPathChildren[@]} -eq 0 ]; then
+        LSINFO "Removing folder '${_streamAbsolutePath}' as it has no children anymore"
+        if [ "${_streamAbsolutePath}" = "${updateHome}" ]; then
             # do not remove home
-            rm -rf "${streamPath}/"*
+            rm -rf "${_streamAbsolutePath}/"*
         else
-            rm -rf "${streamPath}"
+            rm -rf "${_streamAbsolutePath}"
         fi
     else
+        local latestInStreamPath=$( streamLatestAbsolutePath "${updateHome}" "${streamName}" )
         local latestUpdateSiteInStream=( $(compositeRepository -location "${latestInStreamPath}" -list) )
-        LSDEBUG "Current latest update site in stream '${streamPath}' is '${latestUpdateSiteInStream[@]}'"
+        LSDEBUG "Current latest update site in stream '${_streamAbsolutePath}' is '${latestUpdateSiteInStream[@]}'"
         if [ ${#latestUpdateSiteInStream[@]} -gt 0 ]; then
+            local updateSiteURLToClean="${updateURL}/${updateSiteToClean}"
             if [ ${#latestUpdateSiteInStream[@]} -gt 1 ]; then
                 LSDEBUG "There are more than a single update site referenced in the repository ${latestInStreamPath}"
                 compositeRepository -location "${latestInStreamPath}" -removeAll
                 compositeRepository -location "${latestInStreamPath}" -add "${relpath}"
             elif [ "${updateSiteURLToClean}" = "${latestUpdateSiteInStream[0]}" ]; then
                 relpath=$( relativize ${latestInStreamPath} ${updateHome}/${updateSiteToClean} )
-                LSINFO "Removing '${relpath}' from '${latestInStreamPath}'"
+                LSDEBUG "Removing '${relpath}' from '${latestInStreamPath}'"
                 compositeRepository -location "${latestInStreamPath}" -remove "${relpath}"
             fi
         fi
@@ -64,7 +65,7 @@ cleanUpdateSites() {
     cd "${currentPwd}"
 
     if [ ${#foldersWithUnqualifiedVersionPrefix[@]} -eq 0 ]; then
-        LSINFO "No build '${unqualifiedVersion}' found in '${updateHome}, nothing to clean'"
+        LSINFO "No build '${unqualifiedVersion}' found in '${updateHome}', nothing to clean'"
         exit 0
     fi
 
@@ -83,18 +84,32 @@ cleanUpdateSites() {
         local _majorVersion="$(majorVersion ${unqualifiedVersion})"
 
         for updateSiteToClean in ${updateSitesToClean[@]}; do
-            _cleanNightly "${updateHome}" "${updateURL}" "${STREAMS_FOLDER}/${unqualifiedVersion}${STREAM_NAME_SUFFIX}"  "${updateSiteToClean}"
-            _cleanNightly "${updateHome}" "${updateURL}" "${STREAMS_FOLDER}/${_minorVersion}${STREAM_NAME_SUFFIX}"       "${updateSiteToClean}"
-            _cleanNightly "${updateHome}" "${updateURL}" "${STREAMS_FOLDER}/${_majorVersion}${STREAM_NAME_SUFFIX}"       "${updateSiteToClean}"
-            _cleanNightly "${updateHome}" "${updateURL}" ""                                                               "${updateSiteToClean}"
+            LSINFO "Removing ${category} build '${updateSiteToClean}' from stream '$(streamLabel "${unqualifiedVersion}")'"
+            _cleanNightly "${updateHome}" "${updateURL}" "${unqualifiedVersion}" "${updateSiteToClean}"
+            
+            LSINFO "Removing ${category} build '${updateSiteToClean}' from stream '$(streamLabel "${_minorVersion}")'"
+            _cleanNightly "${updateHome}" "${updateURL}" "${_minorVersion}"      "${updateSiteToClean}"
+            
+            LSINFO "Removing ${category} build '${updateSiteToClean}' from stream '$(streamLabel "${_majorVersion}")'"
+            _cleanNightly "${updateHome}" "${updateURL}" "${_majorVersion}"      "${updateSiteToClean}"
+            
+            LSINFO "Removing ${category} build '${updateSiteToClean}' from global stream"
+            _cleanNightly "${updateHome}" "${updateURL}" ""                      "${updateSiteToClean}"
 
-            LSINFO "Removing folder '${updateHome}/${updateSiteToClean}'"
+            LSDEBUG "Removing folder '${updateHome}/${updateSiteToClean}'"
             rm -rf "${updateHome}/${updateSiteToClean}"
         done
 
-        _updateLatestUpdateSite "${updateHome}" "${STREAMS_FOLDER}/${unqualifiedVersion}${STREAM_NAME_SUFFIX}/${LATEST_FOLDER}" "${unqualifiedVersion}" "${projectName} ${unqualifiedVersion}${STREAM_NAME_SUFFIX} latest ${category} build"
-        _updateLatestUpdateSite "${updateHome}" "${STREAMS_FOLDER}/${_minorVersion}${STREAM_NAME_SUFFIX}/${LATEST_FOLDER}"      "${_minorVersion}"      "${projectName} ${_minorVersion}${STREAM_NAME_SUFFIX} latest ${category} build"
-        _updateLatestUpdateSite "${updateHome}" "${STREAMS_FOLDER}/${_majorVersion}${STREAM_NAME_SUFFIX}/${LATEST_FOLDER}"      "${_majorVersion}"      "${projectName} ${_majorVersion}${STREAM_NAME_SUFFIX} latest ${category} build"
-        _updateLatestUpdateSite "${updateHome}" "${LATEST_FOLDER}"                                                              ""                      "${projectName} latest ${category} build"
+        LSINFO "Updating latest link of ${category} stream '$(streamLabel "${unqualifiedVersion}")'"
+        _updateLatestUpdateSite "${updateHome}" "${unqualifiedVersion}" $(streamLatestRepositoryLabel "${projectName}" "${category}" "${unqualifiedVersion}")
+
+        LSINFO "Updating latest link of ${category} stream '$(streamLabel "${_minorVersion}")'"
+        _updateLatestUpdateSite "${updateHome}" "${_minorVersion}"      $(streamLatestRepositoryLabel "${projectName}" "${category}" "${_minorVersion}")
+
+        LSINFO "Updating latest link of ${category} stream '$(streamLabel "${_majorVersion}")'"
+        _updateLatestUpdateSite "${updateHome}" "${_majorVersion}"      $(streamLatestRepositoryLabel "${projectName}" "${category}" "${_majorVersion}")
+
+        LSINFO "Updating latest link of ${category} global stream"
+        _updateLatestUpdateSite "${updateHome}" ""                      $(streamLatestRepositoryLabel "${projectName}" "${category}" "")
     fi
 }

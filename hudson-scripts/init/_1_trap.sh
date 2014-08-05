@@ -17,21 +17,24 @@ __onExit() {
 
 	LSDEBUG "Program will exit, saving the environment variables to a file for later debugging"
 	env | sort > "${WORKING_DIRECTORY}/env.txt"
-
-	if [ ${RETURN} -ne 0 -a ${RETURN} -lt 129 -o ${RETURN} -gt 165 ]; then
-		cd "${_ON_LOAD_PWD}"
-		LSCRITICAL "An error occurred"
-		LSLOGSTACK
-	fi
-
+	
 	exit ${RETURN}
 }
 
 __onInterruption() {
 	local RETURN=$?
-	LSDEBUG "Program has been interrupted"
+	LSINFO "Program has been interrupted"
 	exit ${RETURN}
 }
 
-trap __onInterruption INT TERM #ERR #DEBUG #RETURN
+__onErr() {
+	local RETURN=$?
+	cd "${_ON_LOAD_PWD}"
+	LSCRITICAL "An error occurred"
+	LSLOGSTACK
+	exit ${RETURN}
+}
+
+trap __onErr ERR
+trap __onInterruption INT TERM #DEBUG #RETURN
 trap __onExit EXIT

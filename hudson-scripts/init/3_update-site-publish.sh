@@ -25,22 +25,22 @@ _retrieveZippedArtifact() {
 
 _updateLatestUpdateSite() {
 	local updateHome="${1}"
-    local absolutePathToLatest="${updateHome}${2:+/${2}}"
-    local prefix="${3}"
-    local latestRepoLabel="${4}"
+    local stream="${2}"
+    local latestRepoLabel="${3}"
 
     local currentPwd=$(pwd)
     cd "${updateHome}"
-    local allFilesWithPrefix=( $(echo "${prefix}"* | tr ' ' '\n' | grep -E '[0-9]+\.[0-9]+\.[0-9]+.*' || true) )    
+    local updateSitesInStream=( $(echo "${stream}"* | tr ' ' '\n' | grep -E '[0-9]+\.[0-9]+\.[0-9]+.*' || true) )    
     cd "${currentPwd}"
 
-    if [ ${#allFilesWithPrefix[@]} -gt 0 ]; then
-        local latestUpdatePath=$( echo ${allFilesWithPrefix[@]} | tr ' ' '\n' | sort | tail -n 1 )
-        local relpath=$( relativize ${absolutePathToLatest} ${updateHome}/${latestUpdatePath} )
-        LSINFO "Creating redirection from '${absolutePathToLatest}' to '${latestUpdatePath}'" 
+    if [ ${#updateSitesInStream[@]} -gt 0 ]; then
+    	local absolutePathToLatest=$( streamLatestAbsolutePath "${updateHome}" "${stream}" )
+        local latestUpdateSite=$( echo ${updateSitesInStream[@]} | tr ' ' '\n' | sort | tail -n 1 )
+        local relpath=$( relativize ${absolutePathToLatest} ${updateHome}/${latestUpdateSite} )
+        LSDEBUG "Creating redirection from '${absolutePathToLatest}' to '${relpath}'" 
         createRedirect "${absolutePathToLatest}" "${relpath}" "${latestRepoLabel}"
     else
-        LSDEBUG "No folder in '${updateHome}' have a name that start with '${prefix}' and that match the regex '[0-9]+\.[0-9]+\.[0-9]+.*'."
+        LSDEBUG "No folder in '${updateHome}' have a name that start with '${stream}' and that match the regex '[0-9]+\.[0-9]+\.[0-9]+.*'."
     fi
 }
 
@@ -51,31 +51,28 @@ _publishUpdateSiteInStream() {
 	local qualifiedVersion="${4}"
 	local stream="${5}"
 
-	local repoLabelPrefix="${projectName}${stream:+ ${stream}${STREAM_NAME_SUFFIX}}"
+	local _streamAbsolutePath=$( streamAbsolutePath "${updateHome}" "${stream}" )
+	local relativePathToUpdateSite=$( relativize "${_streamAbsolutePath}" "${updateHome}/${qualifiedVersion}" )
 
-	local streamPath="${stream:+${STREAMS_FOLDER}/${stream}${STREAM_NAME_SUFFIX}}"
-	local streamAbsolutePath="${updateHome}${streamPath:+/${streamPath}}"
-	local relPathToUpdateSite=$( relativize "${streamAbsolutePath}" "${updateHome}/${qualifiedVersion}" )
-
-	LSDEBUG "Adding '${relPathToUpdateSite}' to composite repository '${streamAbsolutePath}'"
+	LSDEBUG "Adding '${relativePathToUpdateSite}' to composite repository '$(streamLabel "${stream}")'"
 	compositeRepository \
-		-location "${streamAbsolutePath}" \
-		-add "${relPathToUpdateSite}" \
-		-repositoryName "${repoLabelPrefix} ${category} builds" \
+		-location "${_streamAbsolutePath}" \
+		-add "${relativePathToUpdateSite}" \
+		-repositoryName $(streamRepositoryLabel "${projectName}" "${category}" "${stream}") \
 		-compressed
-		createP2Index "${streamAbsolutePath}"
+		createP2Index "${_streamAbsolutePath}"
 
-	LSDEBUG "Updating latest of stream '${stream}${STREAM_NAME_SUFFIX}' @ '${streamAbsolutePath}'"
-	_updateLatestUpdateSite "${updateHome}" "${streamPath}${streamPath:+/}${LATEST_FOLDER}" "${stream}" "${repoLabelPrefix} latest ${category} build"
+	LSDEBUG "Updating latest link of ${category} stream '$(streamLabel "${stream}")'"
+	_updateLatestUpdateSite "${updateHome}" "${stream}" $(streamLatestRepositoryLabel "${projectName}" "${category}" "${stream}")
 }
 
 publishUpdateSite() {
 	local wd="${1}"
-	local projectName="${2}"
-	local category="${3}"
-	local artifactURL="${4}"
-	local qualifiedVersion="${5}"
-	local updateHome="${6}"
+	local updateHome="${2}"
+	local projectName="${3}"
+	local category="${4}"
+	local artifactURL="${5}"
+	local qualifiedVersion="${6}"
 
 	# the update site
 	LSINFO "Downloading '${artifactURL}'"
@@ -91,8 +88,12 @@ publishUpdateSite() {
 	cp -Rf "${wd}/${targetUpdateSiteName}/"* "${updateHome}/${qualifiedVersion}"
 
 	## streams update
+	LSINFO "Publishing update site in stream $(streamLabel $(unqualifiedVersion ${qualifiedVersion}))"
 	_publishUpdateSiteInStream "${updateHome}" "${projectName}" "${category}" "${qualifiedVersion}" "$(unqualifiedVersion ${qualifiedVersion})"
+	LSINFO "Publishing update site in stream $(streamLabel $(minorVersion ${qualifiedVersion}))"
 	_publishUpdateSiteInStream "${updateHome}" "${projectName}" "${category}" "${qualifiedVersion}" "$(minorVersion ${qualifiedVersion})"
+	LSINFO "Publishing update site in stream $(streamLabel $(majorVersion ${qualifiedVersion}))"
 	_publishUpdateSiteInStream "${updateHome}" "${projectName}" "${category}" "${qualifiedVersion}" "$(majorVersion ${qualifiedVersion})"
+	LSINFO "Publishing update site in global stream"
 	_publishUpdateSiteInStream "${updateHome}" "${projectName}" "${category}" "${qualifiedVersion}" ""
 }

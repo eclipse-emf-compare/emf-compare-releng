@@ -24,8 +24,15 @@ fi
 unqualifiedVersion="${1}"
 nbBuildToKeep="${2:-5}"
 
+LS_LEVEL=20
 source "$(dirname "${0}")/init.sh"
 
-LSINFO "== Clean up '${unqualifiedVersion}' nightly builds (will keep the ${nbBuildToKeep} most recent) =="
+LSINFO "Cleaning up '${PROJECT_NAME} ${unqualifiedVersion}' nightly builds (will keep the ${nbBuildToKeep} most recent)"
 
-cleanUpdateSites "${UPDATE_NIGHTLY_HOME}" "${UPDATE_NIGHTLY_URL}" "${PROJECT_NAME}" "${NIGHTLY_FOLDER}" "${unqualifiedVersion}" "${nbBuildToKeep}"
+cleanUpdateSites \
+	"${UPDATE_NIGHTLY_HOME}" \
+	"${UPDATE_NIGHTLY_URL}" \
+	"${PROJECT_NAME}" \
+	"${NIGHTLY_FOLDER}" \
+	"${unqualifiedVersion}" \
+	"${nbBuildToKeep}"

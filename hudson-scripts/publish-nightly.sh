@@ -13,20 +13,28 @@
 if [ $# -ne 2 ]; then
      echo "Execution aborted. One or more of the required parameters is not set. 
 
-Usage: $0 artifactURL unqualifiedVersion qualifiedVersion
+Usage: $0 artifactURL qualifiedVersion
 
 - artifactURL: the URL where the zipped update site to publish can be donwload.
 - qualifiedVersion: the qualified version of the update site to publish.
 "
+exit 1
 fi
 
 artifactURL="${1}"
 qualifiedVersion="${2}"
 
+LS_LEVEL=20
 source "$(dirname "${0}")/init.sh"
 
-LSINFO "== Publishing nightly build '${PROJECT_NAME} ${qualifiedVersion}' == "
+LSINFO "Publishing nightly build '${PROJECT_NAME} ${qualifiedVersion}'"
 
-publishUpdateSite "${WORKING_DIRECTORY}" "${PROJECT_NAME}" "${NIGHTLY_FOLDER}" "${artifactURL}" "${qualifiedVersion}" "${UPDATE_NIGHTLY_HOME}"
+publishUpdateSite \
+	"${WORKING_DIRECTORY}" \
+	"${UPDATE_NIGHTLY_HOME}" \
+	"${PROJECT_NAME}" \
+	"${NIGHTLY_FOLDER}" \
+	"${artifactURL}" \
+	"${qualifiedVersion}"
 
-LSINFO "== '${PROJECT_NAME} ${qualifiedVersion}' has been published @ '${UPDATE_NIGHTLY_URL}/${qualifiedVersion}' == "
+LSINFO "'${PROJECT_NAME} ${qualifiedVersion}' has been published at '${UPDATE_NIGHTLY_URL}/${qualifiedVersion}'"

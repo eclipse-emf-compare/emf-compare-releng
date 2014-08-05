@@ -25,7 +25,7 @@ _retrieveZippedArtifact() {
 
 _updateLatestUpdateSite() {
 	local updateHome="${1}"
-    local absolutePathToLatest="${2}"
+    local absolutePathToLatest="${updateHome}${2:+/${2}}"
     local prefix="${3}"
     local latestRepoLabel="${4}"
 
@@ -53,18 +53,19 @@ _publishUpdateSiteInStream() {
 
 	local repoLabelPrefix="${projectName}${stream:+ ${stream}${STREAM_NAME_SUFFIX}}"
 
-	local streamPath="${updateHome}${stream:+/${STREAMS_FOLDER}/${stream}${STREAM_NAME_SUFFIX}}"
-	local relPathToUpdateSite=$( relativize "${streamPath}" "${updateHome}/${qualifiedVersion}" )
+	local streamPath="${stream:+${STREAMS_FOLDER}/${stream}${STREAM_NAME_SUFFIX}}"
+	local streamAbsolutePath="${updateHome}${streamPath:+/${streamPath}}"
+	local relPathToUpdateSite=$( relativize "${streamAbsolutePath}" "${updateHome}/${qualifiedVersion}" )
 
-	LSDEBUG "Adding '${relPathToUpdateSite}' to composite repository '${streamPath}'"
+	LSDEBUG "Adding '${relPathToUpdateSite}' to composite repository '${streamAbsolutePath}'"
 	compositeRepository \
-		-location "${streamPath}" \
+		-location "${streamAbsolutePath}" \
 		-add "${relPathToUpdateSite}" \
 		-repositoryName "${repoLabelPrefix} ${category} builds" \
 		-compressed
-		createP2Index "${streamPath}"
+		createP2Index "${streamAbsolutePath}"
 
-	LSDEBUG "Updating latest of stream '${stream}${STREAM_NAME_SUFFIX}' @ '${streamPath}'"
+	LSDEBUG "Updating latest of stream '${stream}${STREAM_NAME_SUFFIX}' @ '${streamAbsolutePath}'"
 	_updateLatestUpdateSite "${updateHome}" "${streamPath}${streamPath:+/}${LATEST_FOLDER}" "${stream}" "${repoLabelPrefix} latest ${category} build"
 }
 

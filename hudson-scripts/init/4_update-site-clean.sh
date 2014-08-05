@@ -13,7 +13,7 @@
 _cleanNightly() {
     local updateHome="${1}"
     local updateURL="${2}"
-    local streamPath="${3}"
+    local streamPath="${updateHome}${3:+/${3}}"
     local updateSiteToClean="${4}"
     
     local latestInStreamPath="${streamPath}/${LATEST_FOLDER}"
@@ -70,8 +70,8 @@ cleanUpdateSites() {
 
     if [ ${nbBuildToKeep} -gt 0 ]; then
         local updateSiteToKeep=( $(echo ${foldersWithUnqualifiedVersionPrefix[@]} | tr ' ' '\n' | sort -r | head -n ${nbBuildToKeep}) )
-        local UNION=( ${updateSiteToKeep[@]} ${foldersWithUnqualifiedVersionPrefix[@]} )
-        local updateSitesToClean=( $(echo ${UNION[@]} | tr ' ' '\n' | sort | uniq -u) )
+        local union=( ${updateSiteToKeep[@]} ${foldersWithUnqualifiedVersionPrefix[@]} )
+        local updateSitesToClean=( $(echo ${union[@]} | tr ' ' '\n' | sort | uniq -u) )
     else
         local updateSitesToClean=( $(echo ${foldersWithUnqualifiedVersionPrefix[@]} | tr ' ' '\n' | sort) )
     fi
@@ -83,18 +83,18 @@ cleanUpdateSites() {
         local _majorVersion="$(majorVersion ${unqualifiedVersion})"
 
         for updateSiteToClean in ${updateSitesToClean[@]}; do
-            _cleanNightly "${updateHome}" "${updateURL}" "${updateHome}/${STREAMS_FOLDER}/${unqualifiedVersion}${STREAM_NAME_SUFFIX}"  "${updateSiteToClean}"
-            _cleanNightly "${updateHome}" "${updateURL}" "${updateHome}/${STREAMS_FOLDER}/${_minorVersion}${STREAM_NAME_SUFFIX}"       "${updateSiteToClean}"
-            _cleanNightly "${updateHome}" "${updateURL}" "${updateHome}/${STREAMS_FOLDER}/${_majorVersion}${STREAM_NAME_SUFFIX}"       "${updateSiteToClean}"
-            _cleanNightly "${updateHome}" "${updateURL}" "${updateHome}"                                                               "${updateSiteToClean}"
+            _cleanNightly "${updateHome}" "${updateURL}" "${STREAMS_FOLDER}/${unqualifiedVersion}${STREAM_NAME_SUFFIX}"  "${updateSiteToClean}"
+            _cleanNightly "${updateHome}" "${updateURL}" "${STREAMS_FOLDER}/${_minorVersion}${STREAM_NAME_SUFFIX}"       "${updateSiteToClean}"
+            _cleanNightly "${updateHome}" "${updateURL}" "${STREAMS_FOLDER}/${_majorVersion}${STREAM_NAME_SUFFIX}"       "${updateSiteToClean}"
+            _cleanNightly "${updateHome}" "${updateURL}" ""                                                               "${updateSiteToClean}"
 
             LSINFO "Removing folder '${updateHome}/${updateSiteToClean}'"
             rm -rf "${updateHome}/${updateSiteToClean}"
         done
 
-        _updateLatestUpdateSite "${updateHome}" "${updateHome}/${STREAMS_FOLDER}/${unqualifiedVersion}${STREAM_NAME_SUFFIX}/${LATEST_FOLDER}" "${unqualifiedVersion}" "${projectName} ${unqualifiedVersion}${STREAM_NAME_SUFFIX} latest ${category} build"
-        _updateLatestUpdateSite "${updateHome}" "${updateHome}/${STREAMS_FOLDER}/${_minorVersion}${STREAM_NAME_SUFFIX}/${LATEST_FOLDER}"      "${_minorVersion}"      "${projectName} ${_minorVersion}${STREAM_NAME_SUFFIX} latest ${category} build"
-        _updateLatestUpdateSite "${updateHome}" "${updateHome}/${STREAMS_FOLDER}/${_majorVersion}${STREAM_NAME_SUFFIX}/${LATEST_FOLDER}"      "${_majorVersion}"      "${projectName} ${_majorVersion}${STREAM_NAME_SUFFIX} latest ${category} build"
-        _updateLatestUpdateSite "${updateHome}" "${updateHome}/${LATEST_FOLDER}"                                                              ""                      "${projectName} latest ${category} build"
+        _updateLatestUpdateSite "${updateHome}" "${STREAMS_FOLDER}/${unqualifiedVersion}${STREAM_NAME_SUFFIX}/${LATEST_FOLDER}" "${unqualifiedVersion}" "${projectName} ${unqualifiedVersion}${STREAM_NAME_SUFFIX} latest ${category} build"
+        _updateLatestUpdateSite "${updateHome}" "${STREAMS_FOLDER}/${_minorVersion}${STREAM_NAME_SUFFIX}/${LATEST_FOLDER}"      "${_minorVersion}"      "${projectName} ${_minorVersion}${STREAM_NAME_SUFFIX} latest ${category} build"
+        _updateLatestUpdateSite "${updateHome}" "${STREAMS_FOLDER}/${_majorVersion}${STREAM_NAME_SUFFIX}/${LATEST_FOLDER}"      "${_majorVersion}"      "${projectName} ${_majorVersion}${STREAM_NAME_SUFFIX} latest ${category} build"
+        _updateLatestUpdateSite "${updateHome}" "${LATEST_FOLDER}"                                                              ""                      "${projectName} latest ${category} build"
     fi
 }

@@ -36,5 +36,5 @@ __onErr() {
 }
 
 trap __onErr ERR
-trap __onInterruption INT TERM #DEBUG #RETURN
+trap __onInterruption INT QUIT TERM
 trap __onExit EXIT

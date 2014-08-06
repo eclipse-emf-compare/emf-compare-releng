@@ -24,7 +24,6 @@ fi
 artifactURL="${1}"
 qualifiedVersion="${2}"
 
-LS_LEVEL=20
 source "$(dirname "${0}")/init.sh"
 
 LSINFO "Publishing nightly build '${PROJECT_NAME} ${qualifiedVersion}'"

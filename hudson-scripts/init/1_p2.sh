@@ -67,7 +67,7 @@ compositeRepository() {
 	"${WORKING_DIRECTORY}/p2-admin/p2-admin" \
 		-vm "${JAVA_HOME}/bin/java" \
 		-application "org.eclipselabs.equinox.p2.composite.repository" \
-		$@
+		$@ || true
 }
 
 # Create a p2 index file for composite repositories

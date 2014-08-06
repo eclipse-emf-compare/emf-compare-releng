@@ -22,8 +22,6 @@
 
 # Modified from https://github.com/livibetter/log.sh/releases/tag/v0.3
 
-LS_VERSION=0.3
-
 LS_OUTPUT=${LS_OUTPUT:-/dev/stdout}
 # XXX need more flexible templating, currently manual padding for level names
 #LS_DEFAULT_FMT=${LS_DEFAULT_FMT:-'[${_LS_LEVEL_STR}][${FUNCNAME[1]}:${BASH_LINENO[0]}]'}
@@ -46,20 +44,20 @@ LS_LEVELS=(
 )
 
 _LS_FIND_LEVEL_STR () {
-  local LEVEL=${1}
-  local i
-  _LS_LEVEL_STR="${LEVEL}"
-  for ((i=0; i<${#LS_LEVELS[@]}; i+=4)); do
-    if [[ "${LEVEL}" == "${LS_LEVELS[i]}" ]]; then
-      _LS_LEVEL_STR="${LS_LEVELS[i+1]}"
-      #_LS_LEVEL_BEGIN="${LS_LEVELS[i+2]}"
-      #_LS_LEVEL_END="${LS_LEVELS[i+3]}"
-      return 0
-    fi
-  done
-  _LS_LEVEL_BEGIN=""
-  _LS_LEVEL_END=""
-  return 1
+local LEVEL=${1}
+local i
+_LS_LEVEL_STR="${LEVEL}"
+for ((i=0; i<${#LS_LEVELS[@]}; i+=4)); do
+  if [[ "${LEVEL}" == "${LS_LEVELS[i]}" ]]; then
+    _LS_LEVEL_STR="${LS_LEVELS[i+1]}"
+    #_LS_LEVEL_BEGIN="${LS_LEVELS[i+2]}"
+    #_LS_LEVEL_END="${LS_LEVELS[i+3]}"
+    return 0
+  fi
+done
+_LS_LEVEL_BEGIN=""
+_LS_LEVEL_END=""
+return 1
 }
 
 # General logging function
@@ -75,34 +73,28 @@ LSLOG () {
   printf "${LS_DEFAULT_FMT}" "${_LS_LEVEL_STR}" "${_MSG}" "$(basename ${BASH_SOURCE[1]})" "${BASH_LINENO[0]}" >> "${LS_OUTPUT}"
 }
 
-shopt -s expand_aliases
+# Log Call Stack
+LSCALLSTACK () {
+  local i=0
+  local FRAMES=${#BASH_LINENO[@]}
+  if [ "${FRAMES}" -gt "4" ]; then
+    local start=3
+  else 
+    local start=0
+  fi
+  # starts at 3 to skips LSCALLSTACK and __onErr, the last one in arrays
+  for ((i=$start; i<FRAMES-1; i++)); do
+    echo '  File' \"${BASH_SOURCE[i+1]}\", line ${BASH_LINENO[i]}, in ${FUNCNAME[i+1]} >> "${LS_OUTPUT}"
+    # Grab the source code of the line
+    sed -E -n ${BASH_LINENO[i]}'s/^[:space:]*/    /p' "${BASH_SOURCE[i+1]}" >> "${LS_OUTPUT}"
+    # TODO extract arugments from "${BASH_ARGC[@]}" and "${BASH_ARGV[@]}"
+    # It requires `shopt -s extdebug'
+  done
+}
+
 alias LSDEBUG='LSLOG 10'
 alias LSINFO='LSLOG 20'
 alias LSWARNING='LSLOG 30'
 alias LSERROR='LSLOG 40'
 alias LSCRITICAL='LSLOG 50'
 alias LSLOGSTACK='LSDEBUG Stack trace ; LSCALLSTACK'
-
-# TODO Log Bash information
-LSLOGBASH () {
-  :
-}
-
-# TODO Log current user information
-LSLOGUSER () {
-  :
-}
-
-# Log Call Stack
-LSCALLSTACK () {
-  local i=0
-  local FRAMES=${#BASH_LINENO[@]}
-  # FRAMES-2 skips main, the last one in arrays
-  for ((i=FRAMES-2; i>0; i--)); do
-    echo '  File' \"${BASH_SOURCE[i+1]}\", line ${BASH_LINENO[i]}, in ${FUNCNAME[i+1]}
-    # Grab the source code of the line
-    sed -n "${BASH_LINENO[i]} s/^[:space:]*/    /p" "${BASH_SOURCE[i+1]}"
-    # TODO extract arugments from "${BASH_ARGC[@]}" and "${BASH_ARGV[@]}"
-    # It requires `shopt -s extdebug'
-  done
-}

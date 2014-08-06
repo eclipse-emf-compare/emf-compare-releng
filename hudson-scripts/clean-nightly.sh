@@ -24,7 +24,6 @@ fi
 unqualifiedVersion="${1}"
 nbBuildToKeep="${2:-5}"
 
-LS_LEVEL=20
 source "$(dirname "${0}")/init.sh"
 
 LSINFO "Cleaning up '${PROJECT_NAME} ${unqualifiedVersion}' nightly builds (will keep the ${nbBuildToKeep} most recent)"

@@ -21,6 +21,7 @@ shopt -s expand_aliases
 
 SCRIPT_PATH="$(dirname "${0}")"
 INIT_PATH="${INIT_PATH:-${SCRIPT_PATH}/init}"
+LS_LEVEL=20 # log level == info
 
 # load bootstrap scripts (starting with _) in order
 for S in $( echo "${INIT_PATH}/_"* | tr ' ' '\n' | sort -t '.' -k1n );

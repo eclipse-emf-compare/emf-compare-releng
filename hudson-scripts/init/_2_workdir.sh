@@ -11,8 +11,19 @@
 # ====================================================================
 
 export WORKING_DIRECTORY="${WORKING_DIRECTORY:-$(pwd)/target}"
+LS_OUTPUT="${WORKING_DIRECTORY}/log.txt"
 
 if [ ! -d "${WORKING_DIRECTORY}" ]; then
 	LSDEBUG "Creating '${WORKING_DIRECTORY}'"
 	mkdir -p "${WORKING_DIRECTORY}"
 fi
+
+[ -z "${_WORKDIR_MODULE_INITED:-}" ] && {
+	export _WORKDIR_MODULE_INITED="resolved"
+
+	rm -f "${LS_OUTPUT}"
+	touch "${LS_OUTPUT}"
+	tail -f "${LS_OUTPUT}" &
+	_TAIL_PID=$!
+	trap "kill ${_TAIL_PID}" EXIT
+} || true

@@ -33,12 +33,6 @@ source "$(dirname "${0}")/init.sh"
 
 LSINFO "Publishing integration build 'EGit Logical ${egitLogicalQualifiedVersion}'"
 
-echo "${WORKING_DIRECTORY}" \
-	"${UPDATE_HOME}/egit-logical/${INTEGRATION_FOLDER}" \
-	"EGit" \
-	"${INTEGRATION_FOLDER}" \
-	"${egitLogicalArtifactURL}" \
-	"${egitLogicalQualifiedVersion}"
 publishUpdateSite \
 	"${WORKING_DIRECTORY}" \
 	"${UPDATE_HOME}/egit-logical/${INTEGRATION_FOLDER}" \

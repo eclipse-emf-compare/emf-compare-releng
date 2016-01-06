@@ -83,7 +83,7 @@ LSCALLSTACK () {
     local start=0
   fi
   # starts at 3 to skips LSCALLSTACK and __onErr, the last one in arrays
-  # for ((i=$start; i<${FRAMES}-1; i++)); do
+  # for ((i=$start; i<FRAMES-1; i++)); do
     # echo '  File' \"${BASH_SOURCE[i+1]}\", line ${BASH_LINENO[i]}, in ${FUNCNAME[i+1]} >> "${LS_OUTPUT}"
     # Grab the source code of the line
     # sed -E -n ${BASH_LINENO[i]}'s/^[:space:]*/    /p' "${BASH_SOURCE[i+1]}" >> "${LS_OUTPUT}"

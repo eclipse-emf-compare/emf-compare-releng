@@ -37,10 +37,10 @@ _updateLatestUpdateSite() {
     	local absolutePathToLatest=$( streamLatestAbsolutePath "${updateHome}" "${stream}" )
         local latestUpdateSite=$( echo ${updateSitesInStream[@]} | tr ' ' '\n' | sort | tail -n 1 )
         local relpath=$( relativize ${absolutePathToLatest} ${updateHome}/${latestUpdateSite} )
-        LSINFO "Creating redirection from '${absolutePathToLatest}' to '${relpath}'" 
+        LSDEBUG "Creating redirection from '${absolutePathToLatest}' to '${relpath}'" 
         createRedirect "${absolutePathToLatest}" "${relpath}" "${latestRepoLabel}"
     else
-        LSINFO "No folder in '${updateHome}' have a name that start with '${stream}' and that match the regex '[0-9]+\.[0-9]+\.[0-9]+.*'."
+        LSDEBUG "No folder in '${updateHome}' have a name that start with '${stream}' and that match the regex '[0-9]+\.[0-9]+\.[0-9]+.*'."
     fi
 }
 
@@ -54,7 +54,7 @@ _publishUpdateSiteInStream() {
 	local _streamAbsolutePath=$( streamAbsolutePath "${updateHome}" "${stream}" )
 	local relativePathToUpdateSite=$( relativize "${_streamAbsolutePath}" "${updateHome}/${qualifiedVersion}" )
 
-	LSINFO "Adding '${relativePathToUpdateSite}' to composite repository '$(streamLabel "${stream}")'"
+	LSDEBUG "Adding '${relativePathToUpdateSite}' to composite repository '$(streamLabel "${stream}")'"
 	compositeRepository \
 		-location "${_streamAbsolutePath}" \
 		-add "${relativePathToUpdateSite}" \
@@ -62,7 +62,7 @@ _publishUpdateSiteInStream() {
 		-compressed
 		createP2Index "${_streamAbsolutePath}"
 
-	LSINFO "Updating latest link of ${category} stream '$(streamLabel "${stream}")'"
+	LSDEBUG "Updating latest link of ${category} stream '$(streamLabel "${stream}")'"
 	_updateLatestUpdateSite "${updateHome}" "${stream}" $(streamLatestRepositoryLabel "${projectName}" "${category}" "${stream}")
 }
 
@@ -80,7 +80,7 @@ publishUpdateSite() {
 	_retrieveZippedArtifact "${artifactURL}" "${wd}/${targetUpdateSiteName}.zip" "${wd}/${targetUpdateSiteName}"
 
 	if [ ! -d "${updateHome}/${qualifiedVersion}" ]; then
-		LSINFO "Creating folder '${updateHome}/${qualifiedVersion}'"
+		LSDEBUG "Creating folder '${updateHome}/${qualifiedVersion}'"
 		mkdir -p "${updateHome}/${qualifiedVersion}"
 	fi
 

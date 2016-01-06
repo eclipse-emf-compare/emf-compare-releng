@@ -83,13 +83,13 @@ LSCALLSTACK () {
     local start=0
   fi
   # starts at 3 to skips LSCALLSTACK and __onErr, the last one in arrays
-  # for ((i=$start; i<FRAMES-1; i++)); do
-    # echo '  File' \"${BASH_SOURCE[i+1]}\", line ${BASH_LINENO[i]}, in ${FUNCNAME[i+1]} >> "${LS_OUTPUT}"
+  for ((i=$start; i<FRAMES-1; i++)); do
+    echo '  File' \"${BASH_SOURCE[i+1]}\", line ${BASH_LINENO[i]}, in ${FUNCNAME[i+1]} >> "${LS_OUTPUT}"
     # Grab the source code of the line
     # sed -E -n ${BASH_LINENO[i]}'s/^[:space:]*/    /p' "${BASH_SOURCE[i+1]}" >> "${LS_OUTPUT}"
     # TODO extract arugments from "${BASH_ARGC[@]}" and "${BASH_ARGV[@]}"
     # It requires `shopt -s extdebug'
-  # done
+  done
 }
 
 alias LSDEBUG='LSLOG 10'

@@ -15,7 +15,7 @@ _retrieveZippedArtifact() {
 	local localArtifact="${2}"
 	local unzipTo="${3}"
 
-	curl -s -k "${artifactURL}" > "${localArtifact}"
+	curl -L -s -k "${artifactURL}" > "${localArtifact}"
 
 	if [ -d "${unzipTo}" ]; then
 		rm -rf "${unzipTo}"
